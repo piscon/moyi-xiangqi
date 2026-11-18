@@ -644,11 +644,18 @@
       body[data-lang="zh-TW"] .firsthint{ font-family:"Noto Serif TC","Noto Sans TC","PingFang TC",serif; }
       body[data-lang="ja"] .firsthint{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN","YuMincho",serif; }
       @media (prefers-reduced-motion: reduce){ .firsthint{ transition:none; } }
-      /* ---------- 终局动作条：终局当场连贯动作（再来一局 / 悔棋） ----------
+      /* ---------- 终局主动作槽（overbar）：终局当场连贯动作 ----------
          只在 body.game-over（render 按 over 同步）时出现，局中零占位、零残留。
-         主次分明：「再来一局」朱砂实心主按钮（一次直达新局），「悔棋」幽灵次按钮 */
+         槽内永远只有一个主动作（朱砂实心、一次直达），内容按模式×胜负
+         互斥切换（paintOverBtn）：双人/人机=再来一局、闯关胜=下一关（带
+         去向关号）、闯关负/和=再战本关、通关=回榜选关、残局=同题再试。
+         槽内不放悔棋——悔棋全视野只留常驻位单实例（btnUndo / mbUndo /
+         fsUndo）；次按钮只在残局终局作「题目列表」（非悔棋）出现。
+         定型：槽宽由所在表面布局写死、钮高 48 写死，互斥文案共用同一
+         尺寸——文案切换时按钮本体与同行元素零位移 */
       .overbar{ display:none; gap:8px; margin-top:10px; }
       body.game-over .overbar{ display:flex; }
+      .overbar button[hidden]{ display:none; }
       .overbar button{
         min-height:48px; padding:8px 18px; border-radius:3px; font-size:14.5px; cursor:pointer;
         font-family:"Noto Serif SC",serif; white-space:nowrap;
@@ -917,10 +924,18 @@
       /* 模式段进沉浸网格 mode 区（状态行与托盘之间），与窗口版同位序；
          桌面全屏（≥1024）改走顶栏段，本元素在那一档隐藏（见桌面全屏节） */
       body.immersive .modeswitch{ grid-area:mode; margin-top:0; }
-      /* 沉浸终局：动作条进工具区原位，局中三键（悔棋/重开/认输）让位——
-         终局要的是「再来一局 + 悔棋」，与动作条完全对位，不叠行不抢位 */
+      /* 沉浸终局：主动作槽与常驻工具行同在工具区（tools 格）内上下叠放——
+         槽贴格顶、常驻行让出 54px 贴格底，工具行随之长高、棋盘弹性行
+         同量收分（竖屏另有写死扣减，见竖屏沉浸减负块）。常驻悔棋不
+         让位、不隐藏：终局全视野仍只有常驻位这一个悔棋，槽内不另放。
+         局中槽 display:none、常驻行无让位量，布局逐像素不变 */
       body.immersive .overbar{ grid-area:tools; margin-top:0; }
-      body.immersive.game-over .freetools{ display:none; }
+      body.immersive.game-over .overbar{ align-self:start; }
+      body.immersive.game-over .freetools{ align-self:end; margin-top:54px; }
+      /* 桌面全屏时 freetools 住菜单面板：终局面板内不再重复摆常驻行——
+         顶栏 fsUndo 就是该表面唯一的常驻悔棋（面板关闭时本不可见，
+         打开时也不许与顶栏同屏重复） */
+      body.immersive.game-over #menuPanel .freetools{ display:none; }
       body.immersive .freetools button{ min-height:48px; }
       /* 沉浸降噪：状态与按钮都小一号、淡一分，棋盘是唯一主角 */
       body.immersive .turnline .who{ font-size:16px; }
@@ -1092,6 +1107,10 @@
           width:0; height:0; min-height:0; margin:0; overflow:visible; pointer-events:none;
         }
         body.immersive .turnline .who, body.immersive .turnline .tip{ display:none; }
+        /* 终局时工具区叠放主动作槽（工具行 +54px），棋盘同步多扣等量：
+           扣减 282→336，一屏总量不变——顶栏/状态/托盘/槽/常驻行各就
+           其位、永不裁切（与手机窗口版 game-over 让位公式同构） */
+        body.immersive.game-over .boardwrap{ max-width:calc((100vh - 336px) * 96 / 106); max-width:calc((100dvh - 336px) * 96 / 106); }
       }
 
       /* ---------- 对局模式与电脑对手 ---------- */
@@ -1616,6 +1635,21 @@
         body.immersive #fsUndo, body.immersive #fsRestart, body.immersive #fsResign{ display:inline-flex; }
         body.immersive .fstopbar .fst-seg{ display:inline-flex; }
         body.immersive .modeswitch{ display:none; }
+        /* 桌面全屏的主动作槽位 = 顶栏内、退出键左侧（syncFsChrome 搬入）：
+           终局即就位、可见可点，不进菜单面板——旧版槽随搬运进了默认
+           关闭的面板，终局后满屏找不到「下一关」。槽宽 216 写死、钮高
+           36 与顶栏同高：互斥文案（四语最长 Retry this gate / Puzzle
+           list）共用同一盒，切换零位移、顶栏总高与棋盘公式（77）不变。
+           终局时重开/认输在顶栏让位（终局已定，认输无义、重开与主动作
+           同义）：让出的正是槽宽，顶栏一行装得下；常驻悔棋 fsUndo
+           不让位——它仍是该表面全视野唯一的悔棋 */
+        body.immersive .fstopbar .overbar{ margin:0; flex:none; width:216px; width:min(216px, 19vw); }
+        body.immersive .fstopbar .overbar button{ height:36px; min-height:36px; padding:4px 8px; font-size:13px; }
+        body.immersive .fstopbar .overbar .again{ flex:1.35 1 0; }
+        body.immersive.game-over #fsRestart, body.immersive.game-over #fsResign{ display:none; }
+        /* 窄幅桌面全屏（约 1024）：顶栏常驻件总宽贴边，段键内距收一档，
+           给终局槽留出整宽——实测 EN 终局时内容曾溢出栏宽 20px */
+        body.immersive .fstopbar .fst-seg button{ padding:5px 10px; }
         body.immersive.fs-menu-open .fstopbar #fsMenuBtn{ background:var(--ink-06); color:var(--ink); border-color:var(--ink-40); font-weight:700; }
         body.immersive main .boardwrap{
           grid-column:1; grid-row:2; align-self:center; justify-self:center; margin:0; max-width:none;
@@ -1653,7 +1687,6 @@
         }
         body.immersive #menuPanel .freetools{ margin:12px 0 0; }
         body.immersive #menuPanel .freetools button{ padding:8px 6px; font-size:13px; }
-        body.immersive #menuPanel .overbar{ margin:12px 0 0; }
       }
 
       /* ---------- 关于面板：标题 → 人物榜梯队 → 介绍（抽屉浮层、内部滚动） ---------- */
@@ -1857,12 +1890,15 @@
             <span class="clk" id="clkBot" hidden></span>
           </div>
 
-          <!-- 终局连贯动作：任一终局（认输/吃将/困毙/绝杀）落定后当场出现——
-               主按钮「再来一局」一次直达新局（无二次确认、沿用模式/执子/难度），
-               次按钮「悔棋」沿用既有撤销终局行为。只在 body.game-over 时显示 -->
+          <!-- 终局主动作槽：任一终局（认输/吃将/困毙/绝杀）落定后当场出现——
+               槽内只有一个主按钮，一次直达（无二次确认），内容按模式×胜负
+               互斥切换（再来一局 / 下一关·带关号 / 再战本关 / 回榜选关 /
+               残局同题再试，paintOverBtn 同步）。槽内不放悔棋：悔棋只留
+               常驻位单实例；次按钮仅残局终局作「题目列表」出现（hidden
+               由 paintOverBtn 管）。只在 body.game-over 时显示 -->
           <div class="overbar" id="overBar">
             <button type="button" id="btnAgain" class="again">再来一局</button>
-            <button type="button" id="btnOverUndo" class="ghost">悔棋</button>
+            <button type="button" id="btnOverUndo" class="ghost" hidden>题目列表</button>
           </div>
 
           <!-- 模式常驻三段切换：与重开/认输/悔棋同级，四表面一眼可见、
@@ -2633,7 +2669,7 @@
         fullscreen: '全屏', exitFullscreen: '退出全屏',
         soundOn: '有声', soundOff: '静音', sheetSoundOn: '声音 · 有声', sheetSoundOff: '声音 · 静音',
         modePvp: '双人对局', modeAi: '人机对战', modeLadder: '闯关', heroNoteLadder: '连闯八位高手 · 看看你能赢到第几关 · 你执红', modeLabel: '对局模式', youPlay: '你执', red: '红', black: '黑',
-        gateFmt: '第 {n} 关', rankFmt: '排位 · 已过 {m} 关', rankEloFmt: '排位 · 棋力 {e} · 已过 {m} 关', nextGate: '下一关', retryGate: '再战本关', stampClear: '通关',
+        gateFmt: '第 {n} 关', rankFmt: '排位 · 已过 {m} 关', rankEloFmt: '排位 · 棋力 {e} · 已过 {m} 关', nextGate: '下一关', nextGateFmt: '下一关 · 第 {n} 关', clearGateBtn: '回榜选关', retryGate: '再战本关', stampClear: '通关',
         gatePassed: '已胜', gateCurrent: '当前关', gateLocked: '尚未挑战', youHere: '你', youNone: '尚未挑战',
         modePuzzle: '残局', heroNotePuzzle: '33 道古谱残局 · 一步走错，满盘皆输 · 你执红', gatePuzzleSub: '33 道古谱残局 · 一步走错，满盘皆输',
         pzTitle: '残局题库', pzLede: '33 道古谱残局，全出自《适情雅趣》——红方先行，限步取胜，一步走错，满盘皆输。黑方专挑最难缠的防线顽抗，每道都经引擎逐题复核，手痒就来拆一局。',
@@ -2682,7 +2718,7 @@
         fullscreen: '全屏', exitFullscreen: '退出全屏',
         soundOn: '有聲', soundOff: '靜音', sheetSoundOn: '聲音 · 有聲', sheetSoundOff: '聲音 · 靜音',
         modePvp: '雙人對局', modeAi: '人機對戰', modeLadder: '闖關', heroNoteLadder: '連闖八位高手 · 看看你能贏到第幾關 · 你執紅', modeLabel: '對局模式', youPlay: '你執', red: '紅', black: '黑',
-        gateFmt: '第 {n} 關', rankFmt: '排位 · 已過 {m} 關', rankEloFmt: '排位 · 棋力 {e} · 已過 {m} 關', nextGate: '下一關', retryGate: '再戰本關', stampClear: '通關',
+        gateFmt: '第 {n} 關', rankFmt: '排位 · 已過 {m} 關', rankEloFmt: '排位 · 棋力 {e} · 已過 {m} 關', nextGate: '下一關', nextGateFmt: '下一關 · 第 {n} 關', clearGateBtn: '回榜選關', retryGate: '再戰本關', stampClear: '通關',
         gatePassed: '已勝', gateCurrent: '當前關', gateLocked: '尚未挑戰', youHere: '你', youNone: '尚未挑戰',
         modePuzzle: '殘局', heroNotePuzzle: '33 道古譜殘局 · 一步走錯，滿盤皆輸 · 你執紅', gatePuzzleSub: '33 道古譜殘局 · 一步走錯，滿盤皆輸',
         pzTitle: '殘局題庫', pzLede: '33 道古譜殘局，全出自《適情雅趣》——紅方先行，限步取勝，一步走錯，滿盤皆輸。黑方專挑最難纏的防線頑抗，每道都經引擎逐題復核，手癢就來拆一局。',
@@ -2731,7 +2767,7 @@
         fullscreen: 'Fullscreen', exitFullscreen: 'Exit Fullscreen',
         soundOn: 'Sound On', soundOff: 'Muted', sheetSoundOn: 'Sound · On', sheetSoundOff: 'Sound · Off',
         modePvp: 'Two Players', modeAi: 'vs Computer', modeLadder: 'Gauntlet', heroNoteLadder: 'Eight Masters in a Row · How Far Can You Get? · You Play Red', modeLabel: 'Game Mode', youPlay: 'You play', red: 'Red', black: 'Black',
-        gateFmt: 'Gate {n}', rankFmt: 'Rank · {m} cleared', rankEloFmt: 'Rank · Strength {e} · {m} cleared', nextGate: 'Next gate', retryGate: 'Retry this gate', stampClear: 'Cleared!',
+        gateFmt: 'Gate {n}', rankFmt: 'Rank · {m} cleared', rankEloFmt: 'Rank · Strength {e} · {m} cleared', nextGate: 'Next gate', nextGateFmt: 'Next · Gate {n}', clearGateBtn: 'Choose a Gate', retryGate: 'Retry this gate', stampClear: 'Cleared!',
         gatePassed: 'Cleared', gateCurrent: 'Current', gateLocked: 'Not yet challenged', youHere: 'You', youNone: 'Not yet challenged',
         modePuzzle: 'Puzzles', heroNotePuzzle: '33 Classic Endgames · One Wrong Move Loses It All · You Play Red', gatePuzzleSub: '33 classic endgames · One wrong move loses it all',
         pzTitle: 'Endgame Puzzles', pzLede: '33 classic endgame studies from Shi Qing Ya Qu — Red moves first, mate within the limit. One wrong move and the whole board slips away. Black defends on the longest, toughest line, and every study is re-verified by the engine. Itching to try? Crack one open.',
@@ -2780,7 +2816,7 @@
         fullscreen: '全画面', exitFullscreen: '全画面を終了',
         soundOn: '音あり', soundOff: '消音', sheetSoundOn: '音 · あり', sheetSoundOff: '音 · なし',
         modePvp: '二人対局', modeAi: '対コンピュータ', modeLadder: '八関挑戦', heroNoteLadder: '八人の名手に連戦 · どこまで勝ち進める？ · あなたは赤', modeLabel: '対局モード', youPlay: 'あなたは', red: '赤', black: '黒',
-        gateFmt: '{n}関目', rankFmt: 'ランク · {m}関突破', rankEloFmt: 'ランク · 棋力 {e} · {m}関突破', nextGate: '次の関', retryGate: 'この関に再挑戦', stampClear: '全関突破',
+        gateFmt: '{n}関目', rankFmt: 'ランク · {m}関突破', rankEloFmt: 'ランク · 棋力 {e} · {m}関突破', nextGate: '次の関', nextGateFmt: '次の関 · {n}関目', clearGateBtn: '関を選ぶ', retryGate: 'この関に再挑戦', stampClear: '全関突破',
         gatePassed: '突破済', gateCurrent: '挑戦中', gateLocked: '未挑戦', youHere: 'あなた', youNone: '未挑戦',
         modePuzzle: '残局', heroNotePuzzle: '古典残局33題 · 一手のミスで全てが崩れる · あなたは赤', gatePuzzleSub: '古典残局33題 · 一手のミスで全てが崩れる',
         pzTitle: '残局題庫', pzLede: '古典残局33題、すべて『適情雅趣』から——赤の先手、制限手数で詰ませる。一手のミスで全てが崩れる緊張感。黒は最も粘り強い防戦で応じ、全題をエンジンで再検証済み。腕が鳴ったら、一局解いてみて。',
@@ -4398,28 +4434,36 @@
       const hit = t && t.closest && t.closest('#btnRestart, #btnResign, #fsRestart, #fsResign, #mbRestart, #mbResign, #mbRestartBar, #mbResignBar');
       if (!hit) disarmConfirms();
     }, true);
-    /* 终局动作条：「再来一局」一次直达新局——沿用当前模式/执子/难度，
-       无二次确认（与局中「重开一局」的两段确认分工不同、互不影响）；
-       「悔棋」转发既有悔棋按钮，撤销终局行为与局中完全一致 */
-    /* 终局主按钮文案（render 每次同步）：非闯关恒「再来一局」；闯关——
-       红胜且未到顶关「下一关」，其余终局（负/和/胜第 8 关守关）「再战本关」 */
+    /* 终局主动作槽（overbar）：槽内永远只有一个主动作，一次直达、无二次
+       确认（与局中「重开」的两段确认分工不同、互不影响）。内容按模式×
+       胜负互斥（paintOverBtn 于 render 每次同步）：双人/人机=再来一局、
+       闯关胜（未通关）=下一关（文案带去向关号）、闯关胜第 8 关=回榜
+       选关、闯关负/和=再战本关、残局=同题再试。悔棋不在槽内——全视野
+       只留常驻位单实例；槽内次按钮只在残局终局作「题目列表」出现 */
     function paintOverBtn(){
       const b = $('btnAgain'); if (!b) return;
-      /* 残局终局：主按钮同题再试、次按钮回题目列表（局中维持原再来一局/悔棋） */
+      const u = $('btnOverUndo');
+      /* 次按钮定型：仅残局终局可见（题目列表），其余模式/状态一律收起，
+         槽内只剩主动作一个钮，宽度由主钮独占——与局中/他模式同盒 */
+      if (u) u.hidden = !(puzzleMode && over);
       if (puzzleMode){
         b.textContent = over ? LT().pzRetry : LT().again;
-        const u = $('btnOverUndo');
-        if (u) u.textContent = over ? LT().pzListBtn : LT().undoBtn;
+        if (u) u.textContent = LT().pzListBtn;
         return;
       }
       if (!ladderMode){ b.textContent = LT().again; return; }
-      if (over && isRedWinKey(overKey) && gate < 8) b.textContent = LT().nextGate;
+      if (over && isRedWinKey(overKey) && gate < 8) b.textContent = LT().nextGateFmt.replace('{n}', gate + 1);
+      else if (over && isRedWinKey(overKey)) b.textContent = LT().clearGateBtn;
       else if (over) b.textContent = LT().retryGate;
       else b.textContent = LT().again;
     }
     $('btnAgain').addEventListener('click', () => {
       try { closeSheets(); } catch (e) {}
       stopArmed();
+      /* 通关（胜第 8 关）：主动作不重开本关，一击直达人物榜——榜上八行
+         已全部可点（bestGate=8 自由选关），点任意关即经既有行点按路径
+         开新局并亮 VS 横幅，中间无多余状态 */
+      if (ladderMode && over && isRedWinKey(overKey) && gate >= 8){ openAbout(); return; }
       /* 闯关「下一关」：关号先行进一关再开新局（纪录已在终局结算时落存）；
          「再战本关」与非闯关「再来一局」都是原关/原设置直接重开 */
       if (ladderMode && over && isRedWinKey(overKey) && gate < 8) gate += 1;
@@ -4507,7 +4551,6 @@
         (aiMode ? (playerSide === 'r' ? LT().heroNoteAiR : LT().heroNoteAiB) : LT().heroNotePvp);
       $('btnUndo').textContent = LT().undoBtn;
       paintOverBtn();
-      $('btnOverUndo').textContent = (puzzleMode && over) ? LT().pzListBtn : LT().undoBtn;
     }
     /* 模式切换 = 换对局前提，整盘重开。闯关无指定关时从当前关
        （本地最高纪录 + 1，已通关停在第 8 关守关）开局 */
@@ -4880,19 +4923,25 @@
       if (want === fsChromeIn) return;
       const panel = $('menuPanel'), bar = $('fsTopbar'), fst = $('fsStatus');
       const blocks = [document.querySelector('.turnline'), document.querySelector('.statusline'),
-        $('trays'), $('matBal'), $('modeBar'), $('overBar'), document.querySelector('.freetools')];
+        $('trays'), $('matBal'), $('modeBar'), document.querySelector('.freetools')];
+      const overBarEl = $('overBar');
       const clkT = $('clkTop'), clkB = $('clkBot');
       if (want){
         if (!panel || !bar || !fst) return;
         for (const b of blocks) fsRemember(b);
+        fsRemember(overBarEl);
         fsRemember(clkT); fsRemember(clkB);
         for (const b of blocks) if (b) panel.appendChild(b);
+        /* 主动作槽不进菜单面板：钉进顶栏、退出键左侧——终局即在视野内
+           一击直达（旧版随 blocks 进了默认关闭的面板，终局满屏找不到
+           「下一关」）。槽的家与窗口版同理：常驻结构件，只换显隐 */
+        if (overBarEl) bar.insertBefore(overBarEl, $('fsExitTop'));
         bar.insertBefore(clkT, fst);
         if (fst.nextSibling) bar.insertBefore(clkB, fst.nextSibling); else bar.appendChild(clkB);
         fsChromeIn = true;
       } else {
         document.body.classList.remove('fs-menu-open');
-        for (const b of [blocks[3], blocks[2], blocks[6], blocks[5], blocks[1], blocks[0], blocks[4]]) fsRestore(b);
+        for (const b of [overBarEl, blocks[3], blocks[2], blocks[5], blocks[1], blocks[0], blocks[4]]) fsRestore(b);
         fsRestore(clkT); fsRestore(clkB);
         fsChromeIn = false;
       }
