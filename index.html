@@ -557,6 +557,10 @@
       }
       .modeswitch .seg button + button{ border-left:1px solid var(--ink-12); }
       .modeswitch .seg button.on{ background:var(--ink-06); color:var(--ink); font-weight:700; }
+      /* 模式段待确认态（O 轮）：局中切模式与重开/认输同一 arm 机制——
+         朱砂实心 + 裸确认词（文案由 paintModeArm 写），盒尺寸由 flex
+         定死、文案切换零位移；顶栏段同制（其钮宽在 arm 时由 JS 冻结） */
+      .modeswitch .seg button.armed, .fstopbar .fst-seg button.armed{ background:var(--verm); color:#fff; font-weight:700; }
       .modeswitch .seg button:first-child{ border-radius:999px 0 0 999px; }
       .modeswitch .seg button:last-child{ border-radius:0 999px 999px 0; }
       /* ---------- 入口模式门（无存档冷启动限定） ----------
@@ -932,10 +936,13 @@
       body.immersive .overbar{ grid-area:tools; margin-top:0; }
       body.immersive.game-over .overbar{ align-self:start; }
       body.immersive.game-over .freetools{ align-self:end; margin-top:54px; }
-      /* 桌面全屏时 freetools 住菜单面板：终局面板内不再重复摆常驻行——
-         顶栏 fsUndo 就是该表面唯一的常驻悔棋（面板关闭时本不可见，
-         打开时也不许与顶栏同屏重复） */
-      body.immersive.game-over #menuPanel .freetools{ display:none; }
+      /* 桌面全屏时 freetools 住菜单面板：对局控制（悔棋/重开/认输）在
+         面板内一律不摆——该表面的常驻位只有顶栏 fsUndo / fsRestart /
+         fsResign 一处（O 轮：单实例原则推广到全部对局控制，面板只放
+         设置与导航）。提示键不是对局控制，残局时仍可在面板内用 */
+      body.immersive #menuPanel .freetools #btnUndo,
+      body.immersive #menuPanel .freetools #btnRestart,
+      body.immersive #menuPanel .freetools #btnResign{ display:none; }
       body.immersive .freetools button{ min-height:48px; }
       /* 沉浸降噪：状态与按钮都小一号、淡一分，棋盘是唯一主角 */
       body.immersive .turnline .who{ font-size:16px; }
@@ -965,6 +972,8 @@
       .fstopbar .fst-btn:hover{ background:var(--ink-06); }
       .fstopbar .fst-btn.danger{ color:var(--verm); border-color:var(--verm-soft); }
       .fstopbar .fst-btn.armed{ background:var(--verm); color:#fff; border-color:var(--verm); }
+      /* 禁用态（O 轮）：终局认输失效 / AI 思考中悔棋认输锁定，只降不透明度 */
+      .fstopbar .fst-btn[disabled]{ opacity:.45; cursor:default; }
       /* 顶栏常驻三键（悔棋/重开/认输）：只在桌面全屏（≥1024 沉浸）当值，
          与 #fsMenuBtn 同制——其余表面各有自己的常驻位（右栏 freetools /
          手机底栏 / 沉浸工具行），顶栏不重复摆 */
@@ -1057,7 +1066,7 @@
          边距 12 + 行距 5×6=30 + 顶栏 41 + 状态行钉死 48 + 模式段 42 +
          托盘 ≤54 + 工具行 48；回合行已并入顶栏、不再占行，见下方减负
          块）+ 约 7px 余量——盘高恒 ≤ 弹性行高，先扣后算、永不裁切。
-         282 < 窗口版扣减 290：同一视口下沉浸棋盘在高度受限段也恒 ≥
+         282 < 窗口版扣减 294：同一视口下沉浸棋盘在高度受限段也恒 ≥
          窗口版（旧扣减 351 时矮屏沉浸盘比窗口版小约 55px，正是「全屏
          反而更小」的病灶）。宽度受限段由舞台左右边距 8 < 窗口版 10 兜底 */
       @media (orientation: portrait){
@@ -1081,7 +1090,7 @@
 
       /* ---------- 竖屏沉浸减负（≤1023 竖屏）：回合行并入顶栏，棋盘让位归零 ----------
          病灶：沉浸网格曾逐层叠常驻件——顶栏 + 回合行 48 + 状态 48 + 模式
-         42 + 托盘 54 + 工具 48 + 行距边距，扣减涨到 351，比窗口版 290 还
+         42 + 托盘 54 + 工具 48 + 行距边距，扣减涨到 351，比窗口版 294 还
          多扣 61，矮屏上沉浸棋盘反比窗口版小一圈，「全屏」全反了。
          本块只动 ≤1023 竖屏沉浸（横屏与桌面全屏各有专属网格）：
          ① 回合行退出网格——其 .who 文案与顶栏状态小字同源同文（render
@@ -1092,7 +1101,7 @@
          ② 舞台瘦身：左右边距 12→8（窗口版主列是 10——沉浸盘在宽度
          受限段反超窗口版 4px）、上下 10→6、行距 8→6。
          固定占用合计约 275，棋盘扣减 282（见上方竖屏规则）留约 7px
-         余量：盘高恒 ≤ 弹性行、顶栏/状态/托盘/工具永不被裁；282 < 290
+         余量：盘高恒 ≤ 弹性行、顶栏/状态/托盘/工具永不被裁；282 < 294
          保证高度受限段沉浸同样 ≥ 窗口版。两段合起来：同视口沉浸棋盘
          恒 ≥ 窗口版，不再倒挂 */
       @media (orientation: portrait) and (max-width:1023px){
@@ -1138,14 +1147,15 @@
       .modebar .set-group .seg button{ flex:1 1 0; }
       .modebar .ai-opts{ display:contents; }
       .modebar .ai-opts[hidden]{ display:none; }
-      /* 模式专属行（你执/难度）占位保留：hidden 只隐形、不撤位——双人/
-         人机/闯关三态切换，设置区总高与各行纵位纹丝不动。占位用在
-         抽屉与全屏菜单面板（两者都是浮层、内部滚动，留白不挤占任何
-         常驻内容）；桌面窗口右栏不留白：那里这两行显隐由 modebar
-         自身的可缩行 + 内滚 + 封顶吸收（见 ≥1024 窗口规则），外层
-         几何（棋盘/状态/按钮）同样纹丝不动 */
-      body.immersive #aiOpts[hidden]{ display:contents; visibility:hidden; pointer-events:none; }
-      #mbAiOpts[hidden]{ display:block; visibility:hidden; pointer-events:none; }
+      /* 模式专属设置按模式显隐（O 轮）：隐藏 = 不渲染、不占位——抽屉与
+         全屏菜单面板都是浮层、内部滚动，撤位不挤占任何常驻内容；
+         桌面窗口右栏的显隐由 modebar 自身的可缩行 + 内滚 + 封顶吸收
+         （见 ≥1024 窗口规则），外层几何（棋盘/状态/按钮）纹丝不动。
+         .set-group / .sh-row 自带 display，须在此把 [hidden] 钉回
+         display:none，否则类规则压过 UA 的 hidden 语义、行撤不掉 */
+      .modebar .set-group[hidden]{ display:none; }
+      .sh-row[hidden]{ display:none; }
+      .shbtn[hidden]{ display:none; }
       /* 思考提示是浮层（absolute，贴状态行右端）：显隐不占文档流、不改变任何布局尺寸，
          否则电脑每回合亮/灭一次，棋盘就被顶上顶下一次 */
       .thinking{
@@ -1453,9 +1463,12 @@
         body.immersive .mobilebar{ display:none; }
         .mobilebar button{
           flex:1; background:transparent; border:1px solid var(--ink-12); color:var(--ink-80);
-          border-radius:999px; min-height:44px; font-size:14px; white-space:nowrap;
+          border-radius:999px; min-height:48px; font-size:14px; white-space:nowrap;
           font-family:"Noto Serif SC",serif; letter-spacing:.2em; cursor:pointer;
         }
+        /* 禁用态（O 轮）：终局认输失效 / AI 思考中悔棋认输锁定——只降
+           不透明度，服从既有禁用语言（与 .freetools [disabled] 同档） */
+        .mobilebar button[disabled]{ opacity:.45; cursor:default; }
         .mobilebar button.danger{ color:var(--verm); border-color:var(--verm-soft); }
         .mobilebar button.armed{ background:var(--verm); color:#fff; border-color:var(--verm); }
         /* 两段确认在底栏用裸确认词（M 轮）：重开/认输亮起时收字距字号，确认词在冻结盒内单行居中装得下 */
@@ -1582,10 +1595,12 @@
         main{ display:flex; flex-direction:column; }
         .stage{ flex:1 1 auto; min-height:0; grid-template-rows:minmax(0,1fr); }
         .boardcol{ min-height:0; height:100%; }
-        .boardwrap{ width:min(100%, calc((100dvh - 290px) * 96 / 106)); }
+        .boardwrap{ width:min(100%, calc((100dvh - 294px) * 96 / 106)); }
         /* 手机终局：动作条（48px + 间距）进列，棋盘同步让出等量高度——
-           一屏总量不变，状态/托盘/动作条/底栏各就其位，不许把托盘挤出屏 */
-        body.game-over .boardwrap{ width:min(100%, calc((100dvh - 352px) * 96 / 106)); }
+           一屏总量不变，状态/托盘/动作条/底栏各就其位，不许把托盘挤出屏。
+           扣减 294 / 356 已含 O 轮底栏五键 44→48 的 4px 让位（本轮棋盘
+           尺寸变化只许来自这一处） */
+        body.game-over .boardwrap{ width:min(100%, calc((100dvh - 356px) * 96 / 106)); }
       }
       @media (min-width:641px) and (max-width:1023px){
         .banner{ display:none; }
@@ -1809,7 +1824,7 @@
             <button type="button" id="langJa">日本語</button>
           </span>
         </div>
-        <div class="set-group">
+        <div class="set-group" id="clockGroup">
           <span class="lab" id="labClock">计时</span>
           <span class="seg" role="group" id="segClockMode" aria-label="计时">
             <button type="button" id="clkOff" class="on">不计时</button>
@@ -2022,7 +2037,7 @@
           <button type="button" id="mbLangJa">日本語</button>
         </span>
       </div>
-      <div class="sh-row stack">
+      <div class="sh-row stack" id="sheetClockRow">
         <span class="sh-lab" id="sheetClockLab">计时</span>
         <span class="sh-seg" role="group" id="shSegClockMode" aria-label="计时">
           <button type="button" id="mbClkOff">不计时</button>
@@ -2053,9 +2068,9 @@
         <button type="button" class="shbtn ic ic-expand" id="mbFs">全屏</button>
         <button type="button" class="shbtn ic ic-snd" id="mbMute">声音 · 有声</button>
       </div>
+      <!-- 对局控制（重开/认输/悔棋）不在抽屉里（O 轮）：只留常驻位
+           （底栏）一处，抽屉只承载设置与导航 -->
       <div class="sh-row">
-        <button type="button" class="shbtn ic ic-restart" id="mbRestart">重开</button>
-        <button type="button" class="shbtn danger" id="mbResign">认输</button>
         <button type="button" class="shbtn ic ic-info" id="mbAbout">关于墨弈</button>
       </div>
     </section>
@@ -3023,9 +3038,26 @@
     let faceOff = false;
     try { faceOff = localStorage.getItem('moyi-face') === '1'; } catch (e) {}
     function humanTurn(){ return !aiMode || cur().turn === playerSide; }
+    /* 对局控制锁定对账（O 轮二/四）：认输在终局落定后于全部常驻位失效
+       （终局已定、无可认输；新局 render 后自动恢复）；人机/闯关/残局中
+       AI（或残局解算器）回合存续期间——思考标记亮起或轮到 AI 行棋
+       （含调度延迟窗）——悔棋与认输一律置灰禁用，防与落子竞态，
+       AI 落子、回合回到玩家后随 render 自动恢复。棋谱/菜单不受影响。
+       禁用只走 disabled + 既有降不透明度语言，不新造样式。
+       调用点只有两处：render（回合/终局变更的必经之路）与 setThinking
+       （思考标记翻转的唯一入口），状态永不漏刷 */
+    function paintControlLocks(){
+      try {
+        const aiBusy = aiMode && !over && (aiThinking || cur().turn !== playerSide);
+        const undoDis = aiBusy, resignDis = over || aiBusy;
+        for (const id of ['btnUndo', 'mbUndo', 'fsUndo']){ const e = $(id); if (e) e.disabled = undoDis; }
+        for (const id of ['btnResign', 'mbResignBar', 'fsResign']){ const e = $(id); if (e) e.disabled = resignDis; }
+      } catch (e) {}
+    }
     function setThinking(on){
       aiThinking = on;
       const t = $('thinking'); if (t) t.hidden = !on;
+      try { paintControlLocks(); } catch (e) {}
       /* 思考态同步进全屏顶栏状态小字：桌面全屏时回合行（含 .thinking）
          被搬进关闭的菜单面板里，顶栏 fsStatus 是唯一可见的状态出口——
          只镜像回合行文字时，电脑思考期间顶栏只写「黑方行棋」，思考
@@ -3303,6 +3335,7 @@
       }
       try { paintClocks(); } catch (e) {}
       try { paintHint(); } catch (e) {}
+      try { paintControlLocks(); } catch (e) {}
       /* 全屏顶栏状态小字与回合行同源：render 是唯一必经之路，挂这里
          永不漏刷（顶栏只在沉浸显示，窗口模式写了也不见） */
       const fsSt = $('fsStatus');
@@ -3565,6 +3598,7 @@
     }
     function doMove(m){
       disarmConfirms(); /* 回合切换复位两键待确认态（M 轮口径） */
+      try { disarmMode(); } catch (e) {} /* 落子同样复位模式段待确认（O 轮） */
       const st = cur();
       /* 首局提示在玩家落第一步时收起（人机里电脑先行不算） */
       if (!aiMode || st.turn === playerSide){ try { dismissFirstHint(); } catch (e) {} }
@@ -3644,6 +3678,7 @@
       if (ply >= infos.length){ try { closeSheets(); } catch (e) {} return; }
       cancelAI();
       disarmConfirms();
+      try { disarmMode(); } catch (e) {}
       states = states.slice(0, ply + 1);
       infos = infos.slice(0, ply);
       over = false; overKey = ''; sel = -1;
@@ -4165,6 +4200,7 @@
 
     function resetGame(){
       try { disarmConfirms(); } catch (e) {} /* 新局/切模式一律复位待确认态 */
+      try { disarmMode(); } catch (e) {}
       cancelAI();
       states = [puzzleMode ? pzStartState() : initialState()]; infos = []; sel = -1;
       over = false; overKey = '';
@@ -4429,10 +4465,17 @@
        同理；在另一枚确认键上落点不走这里，由那枚键自己的第二下
        逻辑接手（arm 另一键时先解本键，见 armRestart / armResign） */
     document.addEventListener('pointerdown', e => {
-      if (!restartArmed && !resignArmed) return;
       const t = e.target;
-      const hit = t && t.closest && t.closest('#btnRestart, #btnResign, #fsRestart, #fsResign, #mbRestart, #mbResign, #mbRestartBar, #mbResignBar');
-      if (!hit) disarmConfirms();
+      if (restartArmed || resignArmed){
+        const hit = t && t.closest && t.closest('#btnRestart, #btnResign, #fsRestart, #fsResign, #mbRestartBar, #mbResignBar');
+        if (!hit) disarmConfirms();
+      }
+      /* 模式段待确认（O 轮）同纪律：点在模式段之外一律解除；点在段内
+         由段自己的第二下逻辑接手 */
+      if (typeof modeArmKey !== 'undefined' && modeArmKey){
+        const mh = t && t.closest && t.closest('#segMode button, #fsSegMode button');
+        if (!mh) disarmMode();
+      }
     }, true);
     /* 终局主动作槽（overbar）：槽内永远只有一个主动作，一次直达、无二次
        确认（与局中「重开」的两段确认分工不同、互不影响）。内容按模式×
@@ -4542,6 +4585,11 @@
       $('fsModePuzzle').classList.toggle('on', puzzleMode);
       /* 闯关/残局隐藏执子与难度：固定执红、关卡/题目即难度 */
       $('aiOpts').hidden = !aiMode || ladderMode || puzzleMode;
+      /* 计时按模式显隐（O 轮）：残局不启钟，菜单/抽屉里的计时组整组
+         不渲染（桌面右栏 modebar 与手机抽屉同一口径）；其余三模式常在 */
+      const cg = $('clockGroup'); if (cg) cg.hidden = puzzleMode;
+      const scr = $('sheetClockRow'); if (scr) scr.hidden = puzzleMode;
+      try { paintModeArm(); } catch (e) {}
       $('sideR').classList.toggle('on', playerSide === 'r');
       $('sideB').classList.toggle('on', playerSide === 'b');
       $('diff1').classList.toggle('on', aiDiff === 1);
@@ -4589,14 +4637,58 @@
       }
       playerSide = side; setMode('ai');
     }
-    $('modePvp').addEventListener('click', () => { if (mode !== 'pvp') switchMode(false, playerSide); });
-    $('modeAi').addEventListener('click', () => { if (mode !== 'ai') switchMode(true, playerSide); });
-    $('modeLadder').addEventListener('click', () => { if (!ladderMode) setMode('ladder'); });
+    /* 局中模式切换防护（O 轮）：局中（对局进行中、未终局、非模式门）点模式
+       段切换模式 = 毁当前局，与重开/认输同一 arm 机制——第一下只置待
+       确认（目标键变朱砂 + 裸确认词，文案与重开/认输同词 restartConfirm），
+       第二下才真正切换；点别处 / 约 3 秒超时 / 落子 / 终局 / 重开一律
+       解除（解除点与既有口径一致：全局 pointerdown、doMove、jumpTo、
+       resetGame、timeoutLose）。模式门（preGame）与终局状态下照常
+       一击直达、不加确认。常驻段钮是 flex 定宽、文案切换零位移；
+       顶栏段钮宽随文案，arm 瞬间先冻结当前宽、解除时释放，同行零位移 */
+    let modeArmKey = null, modeArmTimer = null;
+    function modeNeedsConfirm(){ return !preGame && !over; }
+    function paintModeArm(){
+      const d = LT();
+      const rows = [['pvp', 'modePvp', 'fsModePvp', d.modePvp], ['ai', 'modeAi', 'fsModeAi', d.modeAi],
+                    ['ladder', 'modeLadder', 'fsModeLadder', d.modeLadder], ['puzzle', 'modePuzzle', 'fsModePuzzle', d.modePuzzle]];
+      for (const [key, idA, idB, label] of rows){
+        const armed = modeArmKey === key;
+        for (const id of [idA, idB]){
+          const e = $(id); if (!e) continue;
+          if (armed){
+            if (id === idB && !e.dataset.wlock && e.offsetWidth > 0){ e.style.width = e.offsetWidth + 'px'; e.dataset.wlock = '1'; }
+            e.textContent = d.restartConfirm;
+          } else {
+            if (e.dataset.wlock){ e.style.width = ''; delete e.dataset.wlock; }
+            e.textContent = label;
+          }
+          e.classList.toggle('armed', armed);
+        }
+      }
+    }
+    function disarmMode(){
+      if (!modeArmKey) return;
+      modeArmKey = null;
+      if (modeArmTimer){ clearTimeout(modeArmTimer); modeArmTimer = null; }
+      paintModeArm();
+    }
+    function modeSegGo(key, fn){
+      if (!modeNeedsConfirm()){ fn(); return; }
+      if (modeArmKey === key){ disarmMode(); fn(); return; }
+      disarmConfirms();
+      modeArmKey = key;
+      paintModeArm();
+      if (modeArmTimer) clearTimeout(modeArmTimer);
+      modeArmTimer = setTimeout(disarmMode, 3000);
+    }
+    $('modePvp').addEventListener('click', () => { if (mode !== 'pvp') modeSegGo('pvp', () => switchMode(false, playerSide)); });
+    $('modeAi').addEventListener('click', () => { if (mode !== 'ai') modeSegGo('ai', () => switchMode(true, playerSide)); });
+    $('modeLadder').addEventListener('click', () => { if (!ladderMode) modeSegGo('ladder', () => setMode('ladder')); });
     /* 残局键三态：不在残局 → 进残局；局中（preGame 已落）→ 开题目列表；
        门内点选且偏好已是残局（preGame 未落）→ 什么都不做，pickGate 落旗
        后直接以冷启动已备好的当前题目开局——误开列表会让背板罩盘、吃掉
        玩家第一下点按（F 轮实测修复） */
-    $('modePuzzle').addEventListener('click', () => { if (!puzzleMode) setMode('puzzle'); else if (!preGame) openPuzzleList(); });
+    $('modePuzzle').addEventListener('click', () => { if (!puzzleMode) modeSegGo('puzzle', () => setMode('puzzle')); else if (!preGame) openPuzzleList(); });
     $('sideR').addEventListener('click', () => { if (playerSide !== 'r') switchMode(true, 'r'); });
     $('sideB').addEventListener('click', () => { if (playerSide !== 'b') switchMode(true, 'b'); });
     for (const [id, d] of [['diff1', 1], ['diff2', 2], ['diff3', 3]]){
@@ -4758,6 +4850,7 @@
       cancelAI();
       over = true;
       try { disarmConfirms(); } catch (e) {} /* 终局复位待确认态 */
+      try { disarmMode(); } catch (e) {}
       overKey = side === 'r' ? 'overTimeR' : 'overTimeB';
       sel = -1;
       render(null);
@@ -4979,25 +5072,24 @@
         $('mbDiff3').classList.toggle('on', aiDiff === 3);
         $('mbFace').classList.toggle('on', faceOff);
         $('mbFace').textContent = faceOff ? LT().faceSheetOn : LT().faceSheet;
+        /* 对坐按模式显隐（O 轮）：只在双人对局出现，其余模式整键不渲染 */
+        $('mbFace').hidden = mode !== 'pvp';
         $('mbFs').textContent = immersive ? LT().exitFullscreen : LT().fullscreen;
         $('mbClkOff').classList.toggle('on', clockMode === 'off');
         for (const g of [10, 15, 20]) $('mbClkT' + g).classList.toggle('on', clockMode !== 'off' && clockGameMin === g);
         $('mbMute').textContent = muted ? LT().sheetSoundOff : LT().sheetSoundOn;
         const rb = $('btnRestart');
-        $('mbRestart').textContent = rb.textContent;
-        $('mbRestart').classList.toggle('armed', rb.classList.contains('armed'));
         /* 顶栏常驻重开（桌面全屏）逐字镜像；底栏常驻重开用短文案：
-           常态 restartBtn、待确认 restartConfirmShort，只镜像 armed 态 */
+           常态 restartBtn、待确认 restartConfirmShort，只镜像 armed 态。
+           抽屉里没有重开/认输镜像（O 轮：面板只放设置） */
         const rArmed = rb.classList.contains('armed');
         const fsRb = $('fsRestart');
         if (fsRb){ fsRb.textContent = rb.textContent; fsRb.classList.toggle('armed', rArmed); }
         const barRb = $('mbRestartBar');
         if (barRb){ barRb.textContent = rArmed ? LT().restartConfirmShort : LT().restartBtn; barRb.classList.toggle('armed', rArmed); }
-        /* 认输镜像同纪律（M 轮）：抽屉/顶栏逐字镜像主键文案与 armed
+        /* 认输镜像同纪律（M 轮）：顶栏逐字镜像主键文案与 armed
            态；底栏常态 resign、待确认用裸确认词，只镜像 armed 态 */
         const gb = $('btnResign');
-        $('mbResign').textContent = gb.textContent;
-        $('mbResign').classList.toggle('armed', gb.classList.contains('armed'));
         const gArmed = gb.classList.contains('armed');
         const fsGb = $('fsResign');
         if (fsGb){ fsGb.textContent = gb.textContent; fsGb.classList.toggle('armed', gArmed); }
@@ -5098,20 +5190,8 @@
        （双钟按新配置重置由 clockPrefChanged 处理） */
     fwd('mbClkOff', 'clkOff');
     fwd('mbClkT10', 'clkT10'); fwd('mbClkT15', 'clkT15'); fwd('mbClkT20', 'clkT20');
-    /* 认输是两段确认：第一下只亮裸确认词，留在抽屉里等第二下；
-       确认通过、终局落定的那一下才关抽屉（与重开同纪律） */
-    $('mbResign').addEventListener('click', () => {
-      const willEnd = resignArmed;
-      $('btnResign').click(); syncSheet();
-      if (willEnd) closeSheets();
-    });
-    /* 重开是两段确认：第一下只亮裸确认词，留在抽屉里等第二下；
-       确认通过、对局真正重置的那一下立刻关抽屉，落点是新对局的棋盘 */
-    $('mbRestart').addEventListener('click', () => {
-      const willReset = restartArmed;
-      $('btnRestart').click(); syncSheet();
-      if (willReset) closeSheets();
-    });
+    /* 抽屉里没有重开/认输（O 轮已移除镜像）：两段确认只在常驻位
+       （底栏 mbRestartBar / mbResignBar 与各表面主键）上进行 */
     $('mbFs').addEventListener('click', () => { closeSheets(); $('fsBtn').click(); syncSheet(); });
     /* 关于面板：抽屉式打开（内部滚动），桌面工具行与手机菜单共用同一开关 */
     function openAbout(){ closeSheets(); document.body.classList.add('about-open'); $('panelBack').hidden = false; }
