@@ -881,6 +881,30 @@
       /* ---------- 全屏游戏模式 / 沉浸回退 ---------- */
       .stage{ position:relative; }
       .toolbar .tgroup{ display:inline-flex; gap:8px; }
+      /* ---------- 常驻图标簇（P 轮；几何中立落位为修正轮口径）：声音 + 全屏 ----------
+         簇是单一容器（#topCluster），由 syncCluster 按表面搬运：桌面/平板
+         窗口住工具行右端、手机窗口住对局列右上（回合行同高浮层）、沉浸
+         （手机/桌面全屏）住全屏顶栏右端。两键触控盒 44×44 写死（四表面
+         同一冻结值，桌面鼠标语境亦同，不另设 40）、图标字形 20px 居中、
+         簇内间距 8px；状态切换只换键内图形（声音喇叭↔静音、全屏展开↔
+         收拢），盒与位置逐像素不变。纯图标：文案 span 不渲染，名称走
+         aria-label。
+         几何中立（硬约束）：簇不许撑高任何宿主行、不许改动任何棋盘
+         扣减与面板锚点（全部保持 v74 定版值）。落位分两制——工具行 /
+         全屏顶栏内：簇容器高封顶 36px（= v74 宿主行内容高），44 盒上
+         下各溢出 4px 落进宿主行的边距/行距空档，不进布局高度；手机
+         窗口：簇绝对定位骑在回合行（30px 定高）右端、竖直居中，溢出
+         落进回合行上下边距，不占文档流（见 ≤640 块 .boardcol 规则）。
+         浮层边缘不压棋子（盘面首行子心距盘顶约 28px）、不压状态字与
+         时钟（时钟在状态行/顶栏中段，与簇不同行不同区） */
+      .cluster{ display:inline-flex; align-items:center; gap:8px; flex:none; }
+      .cluster .iconbtn{
+        width:44px; height:44px; min-width:44px; min-height:44px; padding:0;
+        border-radius:999px; justify-content:center; gap:0;
+      }
+      .cluster .iconbtn svg{ width:20px; height:20px; }
+      .cluster .iconbtn span{ display:none; }
+      .toolbar .cluster, .fstopbar .cluster{ height:36px; }
       .fs-exit{
         display:none; position:absolute; top:10px; right:10px; z-index:30;
         align-items:center; min-height:40px; padding:6px 13px; opacity:.88;
@@ -1198,9 +1222,19 @@
         /* 尺寸一律用 svh（地址栏伸缩时不变）不用 dvh：杜绝「页面一滚→dvh 变→棋盘
            重算→页面再跳」的震荡回路；且对局列每一行都定高，对局中任何文字/吃子
            变化都不改变列高，棋盘的居中位置因此纹丝不动 */
-        .boardcol{ display:flex; flex-direction:column; min-width:0; min-height:calc(100vh - 66px); min-height:calc(100svh - 66px); }
+        .boardcol{ display:flex; flex-direction:column; position:relative; min-width:0; min-height:calc(100vh - 66px); min-height:calc(100svh - 66px); }
         .boardcol .boardwrap{ margin-top:auto; margin-bottom:auto; }
         .turnline{ margin-bottom:6px; height:30px; min-height:30px; flex-wrap:nowrap; overflow:hidden; }
+        /* 手机窗口的常驻图标簇（修正轮几何中立落位）：不进回合行文档流
+           （回合行恒 30px 定高 = v74），簇绝对定位骑在对局列右上、与
+           回合行竖直居中同高——44 盒上下各溢出 7px：上溢出落进舞台顶
+           边距、下溢出 6px 落进回合行下边距、仅 1px 搭在棋盘顶边空白
+           带（首行子心距盘顶约 28px，永不压子）。簇只在手机窗口住
+           .boardcol（syncCluster 搬运），此选择器无第二命中面 */
+        .boardcol > .cluster{ position:absolute; top:-7px; right:0; z-index:6; }
+        /* 思考浮层右锚让开簇位（簇 96 + 间距 12）：浮层只左移让位，
+           簇坐标不随思考亮灭移动 */
+        body:not(.immersive) .thinking{ right:108px; }
         .turnline .who{ font-size:15.5px; }
         .turnline .tip{ display:none; }
         .thinking{ font-size:12.5px; }
@@ -1785,15 +1819,26 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
           <span id="aboutBtnLabel">关于</span>
         </button>
-        <button class="iconbtn" id="fsBtn" type="button" aria-label="全屏游戏模式">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-          <span id="fsLabel">全屏</span>
-        </button>
+        <!-- 常驻图标簇（P 轮）：声音 + 全屏两个高频开关，四表面顶栏右侧
+             同位同序（声在左、全屏在右）。簇是单一容器、两键是全页唯一
+             实例，由 syncCluster 按表面搬运（窗口=工具行 / 手机窗口=
+             对局列右上浮层（回合行同高） / 沉浸=全屏顶栏，替下原顶栏
+             退出键；落位几何中立，不撑任何宿主行），状态只此一份：
+             声音走 muted + paintMute（与抽屉 mbMute 同源双向同步），
+             全屏走 setImmersive + paintFs（进=展开图、退=收拢图同键翻面）。
+             纯图标无可见文字，名称走 aria-label（paint 函数随状态刷新） -->
+        <span class="cluster" id="topCluster">
         <button class="iconbtn" id="muteBtn" type="button" aria-label="声音开关">
           <svg id="sndOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z" fill="currentColor" stroke="none"/><path d="M15 9.5a4 4 0 0 1 0 5"/><path d="M17.5 7a7.5 7.5 0 0 1 0 10"/></svg>
           <svg id="sndOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M11 5 6.5 9H3v6h3.5L11 19z" fill="currentColor" stroke="none"/><path d="m15.5 9.5 5 5M20.5 9.5l-5 5"/></svg>
           <span id="muteLabel">有声</span>
         </button>
+        <button class="iconbtn" id="fsBtn" type="button" aria-label="全屏游戏模式">
+          <svg id="fsExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <svg id="fsCompress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M9.5 4.5v5h-5M14.5 4.5v5h5M9.5 19.5v-5h-5M14.5 19.5v-5h5"/></svg>
+          <span id="fsLabel">全屏</span>
+        </button>
+        </span>
         </span>
       </div>
 
@@ -1852,7 +1897,9 @@
           <button type="button" class="fst-btn ic ic-undo" id="fsUndo">悔棋</button>
           <button type="button" class="fst-btn ic ic-restart" id="fsRestart">重开</button>
           <button type="button" class="fst-btn danger" id="fsResign">认输</button>
-          <button type="button" class="fst-btn ic ic-compress" id="fsExitTop">退出全屏</button>
+          <!-- 原顶栏退出全屏键已并入常驻图标簇的全屏键（P 轮）：沉浸时
+               syncCluster 把 #topCluster 搬进本栏右端当此位，进/出同键
+               同位、图标翻面，不许新旧两个全屏键并存 -->
         </div>
         <button class="fs-exit ic ic-compress" id="fsExit" type="button">退出全屏</button>
         <div class="boardcol">
@@ -2910,7 +2957,7 @@
       set('rulesTitle', d.rulesTitle); setH('rulesText', d.rulesHTML);
       set('firstHint', d.firstHint);
       set('fsExit', d.fsExit);
-      set('fsScoreBtn', d.scoreTitle); set('fsMenuBtn', d.menuBtn); set('fsExitTop', d.exitFullscreen);
+      set('fsScoreBtn', d.scoreTitle); set('fsMenuBtn', d.menuBtn);
       set('fsUndo', d.undoBtn);
       set('fsModePvp', d.modePvp); set('fsModeAi', d.modeAi); set('fsModeLadder', d.modeLadder); set('fsModePuzzle', d.modePuzzle);
       set('gateTitle', d.gateTitle);
@@ -3158,31 +3205,32 @@
       /* 覆盖层坐标同样走视图变换：上一步起落框、可吃虚环、墨点在翻转视图下不错位 */
       const VX = f => X(vFile(f)), VY = r => Y(vRow(r));
       // 上一步标记：落点与起点都画在格位上、都不上棋子身——落点是落点交叉点
-      // 四角的赭金小括弧（细线，半幅 47：子身半径约 40、可吃虚环外缘约 48 但在
-      // 角区回落到约 33，括弧臂全程在两者之外），起点是正墨角标（半幅 46）。
+      // 四角的赭金小括弧（主标记，半幅 47：子身半径约 40、可吃虚环外缘约 48 但在
+      // 角区回落到约 33，括弧臂全程在两者之外），起点是淡墨角标（次标记，半幅 46）。
       // 三色分工：石绿=选中、朱砂=危险（将军/可吃）、赭金=上一步落点（历史
       // 信息、非警示）——落点旧版用朱砂，与将军/可吃同色相撞，现改赭金
       // （--gold 压深赭石：宣纸底不沉、深色盘面也跳得出来）。两者都是四角
-      // 括弧、靠颜色分工（赭金=落点、正墨=起点），且都与棋子身上的圆形状态
-      // （选中环/可吃环/将军环）异层异形，永不叠加。走一格时落点括弧与
-      // 起点角标最近处仍隔约 7 个单位，不压线
-      // 起点墨色（本轮实测驱动）：旧版 --ink-60 / 线宽 3.5 / opacity .95，
-      // 390px 宽真机式渲染截图采样——笔画核心（5% 分位）对盘面对比 4.46、
-      // 暗部四分位均值仅 3.75，细线抗锯齿把名义 4.89 吃掉一截，达不到与
-      // 文字同线的 4.5。改走正墨 --ink（名义 13.8）、线宽 4.5、不透明：
-      // 几何（半幅/臂长）一概不动，仍是四角小括弧，靠墨色浓度与落点的
-      // 赭金分工；深色盘 --ink 同为全浓度（名义约 11.8），两主题同线
+      // 括弧、靠颜色与分量分工（赭金=落点主标记、淡墨=起点次标记），且都与
+      // 棋子身上的圆形状态（选中环/可吃环/将军环）异层异形，永不叠加。
+      // 走一格时落点括弧与起点角标最近处仍隔约 7 个单位，不压线
+      // 主次分工（用户反馈驱动，覆盖上一轮「起点走正墨全浓度」）：上一轮把
+      // 起点提到正墨 --ink / 线宽 4.5 / 不透明，落点赭金却只有线宽 3——深色
+      // 盘上正墨即近纸白，起点白框的视觉分量反压落点金框，主次倒挂。本轮
+      // 倒回主次：落点赭金升为主标记（线宽 4、不透明），起点退为次标记
+      // （--ink-60、线宽 2.5、opacity .9；几何半幅/臂长一概不动）——起点
+      // 只需「看得出从哪来」，落点才是「棋落在哪」的主信息。两主题同规：
+      // 浅色盘上淡墨对赭金同样居次位，不再追求与文字同线的对比
       const last = infos[infos.length - 1];
       if (last){
         const tx = VX(fileOf(last.to)), ty = VY(rowOf(last.to)), C = 47, A = 13;
         for (const [dx, dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
           mk('path', { d: 'M ' + (tx + dx * C) + ' ' + (ty + dy * (C - A)) + ' L ' + (tx + dx * C) + ' ' + (ty + dy * C) + ' L ' + (tx + dx * (C - A)) + ' ' + (ty + dy * C),
-            fill: 'none', stroke: 'var(--gold)', 'stroke-width': 3, opacity: .95 });
+            fill: 'none', stroke: 'var(--gold)', 'stroke-width': 4, opacity: 1 });
         }
         const fx = VX(fileOf(last.from)), fy = VY(rowOf(last.from)), C0 = 46, A0 = 14;
         for (const [dx, dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
           mk('path', { d: 'M ' + (fx + dx * C0) + ' ' + (fy + dy * (C0 - A0)) + ' L ' + (fx + dx * C0) + ' ' + (fy + dy * C0) + ' L ' + (fx + dx * (C0 - A0)) + ' ' + (fy + dy * C0),
-            fill: 'none', stroke: 'var(--ink)', 'stroke-width': 4.5, opacity: 1 });
+            fill: 'none', stroke: 'var(--ink-60)', 'stroke-width': 2.5, opacity: .9 });
         }
       }
       // 合法落点：空位 = 小墨点；可吃的对方子 = 朱砂虚线圆环（.capring，轻呼吸），
@@ -4561,9 +4609,13 @@
       $('sndOn').style.display = muted ? 'none' : '';
       $('sndOff').style.display = muted ? '' : 'none';
       $('muteLabel').textContent = muted ? LT().soundOff : LT().soundOn;
+      /* 常驻图标簇的声音键是纯图标：状态名走 aria-label（开=有声、关=静音），与图标图形同源同刷 */
+      const mb = $('muteBtn'); if (mb) mb.setAttribute('aria-label', muted ? LT().soundOff : LT().soundOn);
     }
     $('muteBtn').addEventListener('click', () => {
       muted = !muted; try { localStorage.setItem('moyi-muted', muted ? '1' : '0'); } catch (e) {} paintMute();
+      /* 抽屉声音开关与簇同一状态源：簇侧切换后抽屉镜像即时对账（反向由 fwd 转发本键 + syncSheet 保证） */
+      try { syncSheet(); } catch (e) {}
       if (!muted) sndMove();
     });
     paintMute();
@@ -4914,7 +4966,30 @@
       requestAnimationFrame(() => fitBoard(true));
       setTimeout(() => fitBoard(true), 60); setTimeout(() => fitBoard(true), 200); setTimeout(() => fitBoard(true), 400);
     }
-    function paintFs(){ $('fsLabel').textContent = immersive ? LT().exitFullscreen : LT().fullscreen; }
+    function paintFs(){
+      $('fsLabel').textContent = immersive ? LT().exitFullscreen : LT().fullscreen;
+      /* 常驻图标簇的全屏键进/出同键翻面：窗口态展开图、沉浸态收拢图，
+         只换键内图形，盒与位置不变；无障碍名随方向同刷 */
+      const ex = $('fsExpand'), cp = $('fsCompress');
+      if (ex) ex.style.display = immersive ? 'none' : '';
+      if (cp) cp.style.display = immersive ? '' : 'none';
+      const fb = $('fsBtn'); if (fb) fb.setAttribute('aria-label', immersive ? LT().exitFullscreen : LT().fullscreen);
+    }
+    /* 常驻图标簇搬运（P 轮；落位为修正轮几何中立口径）：簇是单一容器、
+       两键全页唯一实例，按表面换家——沉浸（手机沉浸/桌面全屏）住全屏
+       顶栏右端（替下原退出键位，容器高封顶不撑栏），手机窗口（≤640）
+       住对局列（.boardcol）右上绝对浮层（与回合行同高居中，不进回合
+       行文档流），其余窗口住工具行右端（容器高封顶不撑行）。搬运只改
+       父节点：两键的监听/paint 全走 id，状态不分家；进出沉浸与跨
+       640 断点的 resize 都经此对账，幂等（已在位直接返回） */
+    function syncCluster(){
+      const cl = $('topCluster'); if (!cl) return;
+      let target = null;
+      if (immersive) target = $('fsTopbar');
+      else if (window.matchMedia && matchMedia('(max-width: 640px)').matches) target = document.querySelector('.boardcol');
+      else target = document.querySelector('.toolbar .tgroup');
+      if (target && cl.parentNode !== target) target.appendChild(cl);
+    }
     let fsNative = false;
     function setImmersive(on){
       immersive = on;
@@ -4922,6 +4997,7 @@
       /* 棋谱/菜单面板都是沉浸专属浮层：进出沉浸都回到关态，窗口模式永不残留 */
       document.body.classList.remove('fs-score-open');
       document.body.classList.remove('fs-menu-open');
+      syncCluster(); /* 图标簇先换家，syncFsChrome 的主动作槽锚点才找得到它 */
       syncFsChrome();
       paintFs(); fitSoon();
       if (on){
@@ -4943,6 +5019,7 @@
        按新视口重算棋盘；用户 Esc/F11 退出原生全屏时沉浸态同步退出，
        窗口版布局随 body.immersive 摘除精确恢复 */
     document.addEventListener('fullscreenchange', () => {
+      syncCluster();
       syncFsChrome();
       fitSoon();
       if (document.fullscreenElement) fsNative = true;
@@ -4952,9 +5029,10 @@
     window.addEventListener('orientationchange', fitSoon);
     $('fsBtn').addEventListener('click', toggleFull);
     $('fsExit').addEventListener('click', toggleFull);
-    /* 全屏顶栏：退出键与工具行全屏键同一动作；「棋谱」键只翻沉浸棋谱
-       面板的开关态（窗口模式顶栏不显示，此键不可达） */
-    $('fsExitTop').addEventListener('click', toggleFull);
+    /* 全屏顶栏的进/出全屏就是常驻图标簇的全屏键（#fsBtn，沉浸时由
+       syncCluster 搬进顶栏）：与窗口态同一键同一监听（toggleFull），
+       原顶栏退出键已删除、不并存。「棋谱」键只翻沉浸棋谱面板的开关
+       态（窗口模式顶栏不显示，此键不可达） */
     $('fsScoreBtn').addEventListener('click', () => {
       const open = document.body.classList.toggle('fs-score-open');
       if (open) document.body.classList.remove('fs-menu-open');
@@ -5028,7 +5106,10 @@
         /* 主动作槽不进菜单面板：钉进顶栏、退出键左侧——终局即在视野内
            一击直达（旧版随 blocks 进了默认关闭的面板，终局满屏找不到
            「下一关」）。槽的家与窗口版同理：常驻结构件，只换显隐 */
-        if (overBarEl) bar.insertBefore(overBarEl, $('fsExitTop'));
+        /* 主动作槽钉在图标簇左侧（簇沉浸时已由 syncCluster 搬进顶栏）：
+           终局槽 → 簇（声音/全屏）→ 栏尾，次序与窗口版槽位口径一致 */
+        const clAnchor = $('topCluster');
+        if (overBarEl) bar.insertBefore(overBarEl, (clAnchor && clAnchor.parentNode === bar) ? clAnchor : null);
         bar.insertBefore(clkT, fst);
         if (fst.nextSibling) bar.insertBefore(clkB, fst.nextSibling); else bar.appendChild(clkB);
         fsChromeIn = true;
@@ -5039,7 +5120,7 @@
         fsChromeIn = false;
       }
     }
-    window.addEventListener('resize', () => syncFsChrome());
+    window.addEventListener('resize', () => { syncCluster(); syncFsChrome(); });
     /* 菜单面板内操作类点按完回棋盘（与手机抽屉 fwdClose 同纪律）：
        模式/执子/难度切换与悔棋/重开/认输/再来一局都属此类；语言/
        计时是纯设置，留在面板里继续调 */
@@ -5056,6 +5137,7 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && immersive) setImmersive(false); });
     paintFs();
+    syncCluster(); /* 首帧即按表面落位（手机窗口→对局列右上浮层，其余窗口→工具行） */
 
     /* ================= 手机底栏与抽屉（菜单 / 棋谱） =================
        底栏与抽屉里的按钮都是「遥控器」：点击一律转发给页面上原有的那个控件，
