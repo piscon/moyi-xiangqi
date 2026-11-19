@@ -549,6 +549,12 @@
       .freetools button:hover{ background:var(--ink-06); }
       .freetools button.danger{ color:var(--verm); border-color:var(--verm-soft); }
       .freetools button.armed{ background:var(--verm); color:#fff; border-color:var(--verm); }
+      /* 提示键盒宽下限写死（T 轮续修）：四语最长文案（提示 ×N，含图标、
+         间距与内距）实占约 105px，min-width 112 把盒宽钉死——计数
+         ×3→×0、切语言、字体后备切换都不许再让盒宽伸缩，不再靠「数字
+         一位数不变」凑。只限窗口表面：沉浸网格列宽由 1fr 均分（窄屏
+         列宽不足 112），min-width 伸进沉浸会撑破网格，故带守卫 */
+      body:not(.immersive) #btnHint{ min-width:112px; }
       /* ---------- 模式常驻三段切换（与三键同级，四表面常驻） ----------
          同一个 #segMode 元素随表面换位：桌面窗口是右栏顶部行、手机窗口
          是状态行下的一行、沉浸是网格 mode 区；桌面全屏 boardcol 摊平后
@@ -705,6 +711,27 @@
         background:transparent; border:1px solid var(--ink-12); color:var(--ink-60); letter-spacing:.06em;
       }
       .overbar .ghost:hover{ background:var(--ink-06); color:var(--ink-80); }
+      /* ---------- 提示用光面（hintout）：残局提示 ×0 再点时出（T 轮） ----------
+         与终局层同一视觉语言：.boardwrap 内绝对浮层、半透明纸色平罩
+         （不用 backdrop 模糊，同 overbar 的理由），只一句文案居中。
+         在场时整面接管棋盘点按（点任意处即关），另有约 1.8s 计时自关；
+         零布局参与——开关前后棋盘与尝试状态（步数/局面/计数）纹丝不动 */
+      .hintout{
+        position:absolute; inset:0; z-index:26; display:flex;
+        align-items:center; justify-content:center;
+        background:rgba(244,237,218,.52); border-radius:3px; cursor:pointer;
+      }
+      @media (prefers-color-scheme: dark){
+        .hintout{ background:rgba(31,27,20,.55); }
+      }
+      .hintout[hidden]{ display:none; }
+      .hintout.show{ animation:overIn .3s ease both; }
+      @media (prefers-reduced-motion: reduce){ .hintout.show{ animation:none; } }
+      .hintout p{
+        margin:0; padding:0 24px; text-align:center;
+        font-family:"Noto Serif SC",serif; font-size:19px; font-weight:700;
+        letter-spacing:.14em; color:var(--ink);
+      }
       /* ---------- 对局时钟面（默认关，开启才显示） ----------
          状态行两端各一枚：上钟 = 棋盘上方一侧、下钟 = 下方一侧（随视图翻转
          互换），色点分红黑；行棋方高亮（.on），读秒中或剩余 <10 秒转朱砂（.low）。
@@ -1397,6 +1424,10 @@
         body:not(.immersive) .score .capline{ height:44px; overflow:hidden; white-space:normal; line-height:22px; overflow-wrap:break-word; word-break:normal; }
         body:not(.immersive) .score .movelist{ flex:none; height:312px; max-height:312px; }
         body:not(.immersive) .freetools{ grid-column:2; grid-row:11; margin-top:0; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+        /* 残局四键（T 轮续修）：提示键在场时三列装四键，第四键必折到
+           第二行独占一格——残局时改两列两行成田字，四键等宽、第二行
+           高度由工具行自身（第 11 行）承接，棋盘所跨行位纹丝不动 */
+        body.pzmode:not(.immersive) .freetools{ grid-template-columns:1fr 1fr; }
         /* 终局动作层（S 轮）：已迁棋盘中央浮层，不再占右栏第 10 行；
            右栏行位退休后该行恒塌为 0，终局与局中布局逐像素一致 */
         body:not(.immersive) .freetools button{ min-height:44px; padding:8px 4px; font-size:13px; }
@@ -1542,6 +1573,12 @@
           background:var(--paper); border-top:1px solid var(--ink-12);
         }
         body.immersive .mobilebar{ display:none; }
+        /* 镜像键靠 hidden 显隐：.ic 给按钮上了 display，须在此把 hidden
+           钉回不显示（与 .freetools 同一口径），否则残局外提示键常驻 */
+        .mobilebar button[hidden]{ display:none; }
+        /* 残局提示镜像键：字距归零给「提示 ×N」整文案腾单行宽度（底栏
+           通用 .2em 与日文 .08em 在六键并排时都装不下最长文案） */
+        #mbHint{ letter-spacing:0; }
         .mobilebar button{
           flex:1; background:transparent; border:1px solid var(--ink-12); color:var(--ink-80);
           border-radius:999px; min-height:48px; font-size:14px; white-space:nowrap;
@@ -1572,6 +1609,12 @@
           font-size:13px; font-family:"Noto Serif SC",serif; cursor:pointer;
         }
       }
+      /* 极窄屏（<360px）：底栏六键并排时四语任一的整文案都装不下——
+         提示镜像键的文字标签退场，只剩灯泡图标 + ×N 计数（计数是这枚
+         键的功能本体，永不退场）；≥360 时整文案「提示 ×N」照常 */
+      @media (max-width:359px){
+        #mbHint .hlabel{ display:none; }
+      }
 
       /* ---------- 多语言：分段选择只在菜单抽屉 / 桌面右栏设置区，棋盘周边不新增按钮 ---------- */
       /* 语言控件：一行四段（简 / 繁 / EN / 日本語）并排点选，与其他分段
@@ -1599,6 +1642,9 @@
       /* 终局动作条按钮随语言整栈（与 freetools 同等待遇，防繁體/日文字形混排） */
       body[data-lang="zh-TW"] .overbar button{ font-family:"Noto Serif TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif; }
       body[data-lang="ja"] .overbar button{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN","YuMincho",serif; }
+      /* 提示用光面文案随语言整栈（与终局动作条同一待遇） */
+      body[data-lang="zh-TW"] .hintout p{ font-family:"Noto Serif TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif; }
+      body[data-lang="ja"] .hintout p{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN","YuMincho",serif; }
 
       /* ---------- 按语言分字体栈（繁简/日文字形混排根治） ----------
          根因：界面元素多处写死 Noto Sans/Serif SC，设备又按系统默认中文字体
@@ -1994,6 +2040,13 @@
               <button type="button" id="btnAgain" class="again">再来一局</button>
               <button type="button" id="btnOverUndo" class="ghost" hidden>题目列表</button>
             </div>
+            <!-- 提示用光面（T 轮）：残局提示计数到 ×0 后再点提示键才出，
+                 轻罩加一句文案（pzHintOut，四语词典）；点按任意处或约
+                 1.8s 后关闭，在场时整面拦下棋盘点按、不穿透；关闭后
+                 尝试状态（步数/局面/计数）原样，仍可继续对弈 -->
+            <div class="hintout" id="hintOut" hidden>
+              <p id="hintOutText">你的提示用光了</p>
+            </div>
           </div>
 
           <div class="statusline">
@@ -2111,11 +2164,16 @@
     </section>
 
     <!-- 手机底栏（仅 ≤640px 显示）：常用三键（悔棋 / 重开 / 认输）与
-         棋谱 / 菜单同行常驻，一眼可达、不用先进菜单 -->
+         棋谱 / 菜单同行常驻，一眼可达、不用先进菜单。残局时多一枚提示
+         镜像键（mbHint，仅残局在场）：窗口版工具区在 ≤640 被整行隐藏，
+         提示键旧版没有底栏镜像、手机残局根本点不到——镜像键与主键
+         btnHint 共用同一份计数与状态（paintHint 逐项镜像、点按转发
+         主键），不另存第二份状态 -->
     <nav class="mobilebar" id="mobileBar" aria-label="对局快捷栏">
       <button type="button" id="mbUndo" class="ic ic-undo">悔棋</button>
       <button type="button" id="mbRestartBar" class="ic ic-restart">重开</button>
       <button type="button" id="mbResignBar" class="danger">认输</button>
+      <button type="button" id="mbHint" class="ic ic-bulb" hidden><span class="hlabel">提示</span><span class="hcount">×3</span></button>
       <button type="button" id="mbScore" class="ic ic-list">棋谱</button>
       <button type="button" id="mbMenu" class="ic ic-menu">菜单</button>
     </nav>
@@ -2782,7 +2840,7 @@
         pzSrcFmt: '《适情雅趣》第 {n} 局', pzLimitFmt: '{n} 步杀', pzStepFmt: '红步 {a} / {b}',
         pzUnsolved: '未解', pzSolvedTag: '已解', pzSolo: '独立解出', pzHinted: '借助提示',
         pzWinLine: '解题成功', pzFailLine: '本题未解', pzFailSteps: '步数已尽 · 本题未解',
-        pzRetry: '再试一次', pzListBtn: '题目列表', pzHintBtn: '提示', pzHintUsed: '提示已用', pzHintFmt: '提示：{t}',
+        pzRetry: '再试一次', pzListBtn: '题目列表', pzHintBtn: '提示', pzHintUsed: '提示已用', pzHintFmt: '提示：{t}', pzHintOut: '你的提示用光了',
         pzProgressFmt: '集印 {a} / {b}',
         achTitle: '成就', achLede: '解开一局，就盖一枚朱印——自己想出来的是实心印，靠提示的是淡印。33 枚集着集着就上头，看看你能集到第几枚。',
         achFirst: '首解', achFirstDesc: '集到第一枚印', achHalf: '半壁', achHalfDesc: '解开半数残局', achAll: '全解', achAllDesc: '集满全部残局印',
@@ -2831,7 +2889,7 @@
         pzSrcFmt: '《適情雅趣》第 {n} 局', pzLimitFmt: '{n} 步殺', pzStepFmt: '紅步 {a} / {b}',
         pzUnsolved: '未解', pzSolvedTag: '已解', pzSolo: '獨立解出', pzHinted: '借助提示',
         pzWinLine: '解題成功', pzFailLine: '本題未解', pzFailSteps: '步數已盡 · 本題未解',
-        pzRetry: '再試一次', pzListBtn: '題目列表', pzHintBtn: '提示', pzHintUsed: '提示已用', pzHintFmt: '提示：{t}',
+        pzRetry: '再試一次', pzListBtn: '題目列表', pzHintBtn: '提示', pzHintUsed: '提示已用', pzHintFmt: '提示：{t}', pzHintOut: '你的提示用光了',
         pzProgressFmt: '集印 {a} / {b}',
         achTitle: '成就', achLede: '解開一局，就蓋一枚朱印——自己想出來的是實心印，靠提示的是淡印。33 枚集著集著就上頭，看看你能集到第幾枚。',
         achFirst: '首解', achFirstDesc: '集到第一枚印', achHalf: '半壁', achHalfDesc: '解開半數殘局', achAll: '全解', achAllDesc: '集滿全部殘局印',
@@ -2880,7 +2938,7 @@
         pzSrcFmt: 'Shi Qing Ya Qu · No. {n}', pzLimitFmt: 'Mate in {n}', pzStepFmt: 'Red moves {a} / {b}',
         pzUnsolved: 'Unsolved', pzSolvedTag: 'Solved', pzSolo: 'Solved unaided', pzHinted: 'Solved with a hint',
         pzWinLine: 'Solved!', pzFailLine: 'Not solved', pzFailSteps: 'Out of moves · Not solved',
-        pzRetry: 'Try again', pzListBtn: 'Puzzle list', pzHintBtn: 'Hint', pzHintUsed: 'Hint used', pzHintFmt: 'Hint: {t}',
+        pzRetry: 'Try again', pzListBtn: 'Puzzle list', pzHintBtn: 'Hint', pzHintUsed: 'Hint used', pzHintFmt: 'Hint: {t}', pzHintOut: 'You’re out of hints',
         pzProgressFmt: 'Seals {a} / {b}',
         achTitle: 'Achievements', achLede: 'Solve a study, earn its vermilion seal — solid if you found it yourself, pale if you peeked at the hint. Collecting all 33 is quietly addictive — how many can you gather?',
         achFirst: 'First Solve', achFirstDesc: 'Earn your first seal', achHalf: 'Halfway', achHalfDesc: 'Solve half the studies', achAll: 'Full Set', achAllDesc: 'Collect every puzzle seal',
@@ -2929,7 +2987,7 @@
         pzSrcFmt: '『適情雅趣』第{n}局', pzLimitFmt: '{n}手詰め', pzStepFmt: '赤 {a} / {b} 手',
         pzUnsolved: '未解決', pzSolvedTag: '解決済', pzSolo: '自力で解決', pzHinted: 'ヒント使用',
         pzWinLine: '解題成功', pzFailLine: '未解決', pzFailSteps: '手数切れ · 未解決',
-        pzRetry: 'もう一度', pzListBtn: '題目一覧', pzHintBtn: 'ヒント', pzHintUsed: 'ヒント使用済', pzHintFmt: 'ヒント：{t}',
+        pzRetry: 'もう一度', pzListBtn: '題目一覧', pzHintBtn: 'ヒント', pzHintUsed: 'ヒント使用済', pzHintFmt: 'ヒント：{t}', pzHintOut: 'ヒントを使い切りました',
         pzProgressFmt: '印 {a} / {b}',
         achTitle: '成就', achLede: '一局解けば、朱印がひとつ——自力なら実印、ヒントを使えば淡印。33個集める手が止まらなくなる。いくつ集められる？',
         achFirst: '初解決', achFirstDesc: '最初の印を集める', achHalf: '半壁', achHalfDesc: '残局の半数を解く', achAll: '全解', achAllDesc: '残局印をすべて集める',
@@ -3000,6 +3058,7 @@
       set('aboutTitle', d.aboutTitle); setH('aboutText', d.aboutHTML);
       set('rulesTitle', d.rulesTitle); setH('rulesText', d.rulesHTML);
       set('firstHint', d.firstHint);
+      set('hintOutText', d.pzHintOut);
       set('fsExit', d.fsExit);
       set('fsScoreBtn', d.scoreTitle); set('fsMenuBtn', d.menuBtn);
       set('fsUndo', d.undoBtn);
@@ -3084,7 +3143,7 @@
     /* 残局模式状态（E 轮）：puzzleMode 时 aiMode 同为真、固定执红；
        puzzleIdx 是当前题号（PUZZLES 下标，数据块在存档一节之后定义，
        此处只存下标、取值时由 pzDef 钳制）；其余 pz* 是单次尝试的瞬时态 */
-    let puzzleMode = false, puzzleIdx = 0, pzHintUsed = false, pzSettled = false, pzHintSq = -1, pzHintText = '';
+    let puzzleMode = false, puzzleIdx = 0, pzHintUsed = false, pzHintsLeft = 3, pzSettled = false, pzHintSq = -1, pzHintText = '';
     try {
       const mm = localStorage.getItem('moyi-mode');
       if (mm === 'ai') mode = 'ai';
@@ -3805,7 +3864,10 @@
        （存档损坏/版本不符）→ 整盘作废、删档，维持开局，绝不带半截死局恢复 */
     function saveGame(){
       try {
-        if (!infos.length && !over){ localStorage.removeItem('moyi-game'); return; }
+        /* 残局提示已扣次数但尚未落子时，存档也必须落存（T 轮）：否则
+           「用过提示后重载」会把计数刷回 ×3；其余情形维持旧口径——
+           零步未终局不留档 */
+        if (!infos.length && !over && !(puzzleMode && pzHintsLeft < 3)){ localStorage.removeItem('moyi-game'); return; }
         localStorage.setItem('moyi-game', JSON.stringify({
           v: 1,
           moves: infos.map(i => [i.from, i.to]),
@@ -3813,7 +3875,9 @@
           mode: mode,
           gate: ladderMode ? gate : 0,
           pz: puzzleMode ? pzDef().id : '',
-          ph: pzHintUsed ? 1 : 0
+          /* ph = 本次尝试已用提示次数（0–3，T 轮）；旧存档 ph 只有 0/1
+             （用没用过），按已用次数读回即天然衔接 */
+          ph: 3 - pzHintsLeft
         }));
       } catch (e) {}
     }
@@ -3875,7 +3939,9 @@
       const okShape = data && data.v === 1 && Array.isArray(data.moves) &&
         data.moves.every(p => Array.isArray(p) && p.length === 2 &&
           Number.isInteger(p[0]) && Number.isInteger(p[1]) && p[0] >= 0 && p[0] < 90 && p[1] >= 0 && p[1] < 90);
-      if (!okShape || !data.moves.length){ try { localStorage.removeItem('moyi-game'); } catch (e) {} return false; }
+      /* 零步存档只在残局（已扣提示次数、尚未落子，见 saveGame）合法，
+         其余零步档仍按坏档作废 */
+      if (!okShape || (!data.moves.length && !data.pz)){ try { localStorage.removeItem('moyi-game'); } catch (e) {} return false; }
       /* 闯关存档按关恢复：存档的 mode/gate 是这盘局的归属，先于重演落位，
          结算/印章/状态行都按这一关的口径走（旧存档无此字段时维持现模式） */
       if (data.mode === 'ladder' && Number.isInteger(data.gate) && data.gate >= 1 && data.gate <= 8){
@@ -3888,7 +3954,11 @@
         const pi = PUZZLES.findIndex(p => p.id === data.pz);
         if (pi < 0){ try { localStorage.removeItem('moyi-game'); } catch (e) {} return false; }
         mode = 'puzzle'; puzzleMode = true; ladderMode = false; aiMode = true; playerSide = 'r'; puzzleIdx = pi;
-        pzHintUsed = data.ph === 1;
+        /* 提示计数随尝试读回（T 轮）：ph = 已用次数（旧档 0/1 同口径），
+           重载不恢复——防刷新刷次数 */
+        const hu = parseInt(data.ph, 10);
+        pzHintsLeft = (hu >= 1 && hu <= 3) ? 3 - hu : 3;
+        pzHintUsed = pzHintsLeft < 3;
       } else {
         puzzleMode = false;
         if (data.mode === 'pvp'){ mode = 'pvp'; ladderMode = false; aiMode = false; }
@@ -4216,19 +4286,33 @@
       const t = $('pzTitle');
       if (t && t.scrollIntoView) setTimeout(() => { try { t.scrollIntoView({ block: 'start' }); } catch (e) {} }, 60);
     }
-    /* 提示键：每次尝试限一次；给出后选中该子并在状态行报记谱，
-       落点由覆盖层另加一圈朱砂外环标出（与可吃虚环异线型） */
+    /* 提示键（T 轮）：每次尝试 3 次，键面带计数「提示 ×N」——计数只换
+       数字、文案长度恒定，按钮盒与同行元素逐态不动。给出后选中该子并
+       在状态行报记谱，落点由覆盖层另加一圈朱砂外环标出（与可吃虚环
+       异线型）。计数到 ×0 键仍在场可点：再点不出提示、改出用光面；
+       解算不出着法时不扣次数（没给出的提示不算用掉） */
     function paintHint(){
       const b = $('btnHint'); if (!b) return;
       b.hidden = !puzzleMode;
-      b.textContent = pzHintUsed ? LT().pzHintUsed : LT().pzHintBtn;
-      b.disabled = !puzzleMode || pzHintUsed || over || cur().turn !== 'r';
+      b.textContent = LT().pzHintBtn + ' ×' + pzHintsLeft;
+      b.disabled = !puzzleMode || over || cur().turn !== 'r';
+      /* 手机底栏镜像键（T 轮续修）：显隐 / 禁用 / 文案 / 计数逐项镜像
+         主键同一份状态——窗口工具区在 ≤640 整行隐藏，手机残局靠这枚
+         键点提示；点按只转发主键（见 mbHint 监听），不另存状态 */
+      const mb = $('mbHint');
+      if (mb){
+        mb.hidden = !puzzleMode;
+        mb.disabled = b.disabled;
+        const lab = mb.querySelector('.hlabel'); if (lab) lab.textContent = LT().pzHintBtn;
+        const cnt = mb.querySelector('.hcount'); if (cnt) cnt.textContent = '×' + pzHintsLeft;
+      }
     }
     $('btnHint').addEventListener('click', () => {
-      if (!puzzleMode || pzHintUsed || over || cur().turn !== 'r'){ sndDeny(); return; }
+      if (!puzzleMode || over || cur().turn !== 'r'){ sndDeny(); return; }
+      if (pzHintsLeft <= 0){ showHintOut(); return; }
       const mv = pzBestRedMove();
       if (!mv){ sndDeny(); return; }
-      pzHintUsed = true;
+      pzHintsLeft--; pzHintUsed = true;
       pzHintText = toNotation(cur(), mv);
       sel = mv.from; pzHintSq = mv.to;
       legalCache = legalMoves(cur(), cur().turn);
@@ -4236,6 +4320,31 @@
       render(null);
       sndMove();
     });
+
+    /* 提示用光面（T 轮）：×0 再点提示键时出——轻罩加一句「你的提示
+       用光了」（词典 pzHintOut），整面拦下棋盘点按、不穿透；点按面
+       上任意处即关，另有约 1.8s 计时自关（代际计数防旧计时误关新面，
+       与 VS 横幅同一纪律）。关后尝试状态（步数/局面/计数）原样不动 */
+    let hintOutTimer = null, hintOutGen = 0;
+    function showHintOut(){
+      const el = $('hintOut'); if (!el) return;
+      $('hintOutText').textContent = LT().pzHintOut;
+      const gen = ++hintOutGen;
+      if (hintOutTimer){ clearTimeout(hintOutTimer); hintOutTimer = null; }
+      el.hidden = false;
+      el.classList.remove('show'); void el.offsetWidth; /* 重启动画：连点也从头淡入 */
+      el.classList.add('show');
+      hintOutTimer = setTimeout(() => { if (gen === hintOutGen) hideHintOut(); }, 1800);
+      sndDeny();
+    }
+    function hideHintOut(){
+      const el = $('hintOut'); if (!el || el.hidden) return;
+      hintOutGen++;
+      if (hintOutTimer){ clearTimeout(hintOutTimer); hintOutTimer = null; }
+      el.hidden = true;
+      el.classList.remove('show');
+    }
+    $('hintOut').addEventListener('click', hideHintOut);
 
     /* ================= 闯关对战横幅（纯展示层） =================
        触发唯一入口 = resetGame 且 ladderMode：进模式首关、人物榜切关、
@@ -4305,7 +4414,9 @@
       cancelAI();
       states = [puzzleMode ? pzStartState() : initialState()]; infos = []; sel = -1;
       over = false; overKey = '';
-      pzHintUsed = false; pzSettled = false; pzHintSq = -1; pzHintText = '';
+      /* 新尝试（重开/再试/切题/重进）：提示计数回满 ×3（T 轮），用光面收起 */
+      pzHintUsed = false; pzHintsLeft = 3; pzSettled = false; pzHintSq = -1; pzHintText = '';
+      try { hideHintOut(); } catch (e) {}
       legalCache = legalMoves(states[0], 'r');
       hideStamp(); clearCheckFx(); render(null);
       saveGame();
@@ -5291,6 +5402,9 @@
     window.addEventListener('resize', () => { try { fitScoreSheet(); } catch (e) {} });
     $('mbMenu').addEventListener('click', () => { $('menuSheet').hidden ? openMenu() : closeSheets(); });
     $('mbUndo').addEventListener('click', () => $('btnUndo').click());
+    /* 底栏残局提示镜像键：点按转发主键 btnHint（计数扣减 / ×0 用光面 /
+       求不出着法不扣次数，全走主键那一份实现与状态） */
+    $('mbHint').addEventListener('click', () => $('btnHint').click());
     /* 底栏常驻重开/认输：与抽屉里的同名键同一套转发与两段确认纪律 */
     $('mbResignBar').addEventListener('click', () => {
       const willEnd = resignArmed;
