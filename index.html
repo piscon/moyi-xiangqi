@@ -628,7 +628,9 @@
         box-shadow:0 18px 44px var(--shadow); padding:20px 18px 16px;
         display:flex; flex-direction:column; gap:10px;
       }
-      .mg-title{ text-align:center; font-size:22px; color:var(--ink); letter-spacing:.12em; margin-bottom:2px; }
+      /* Y 轮：门只留标题（应用名），标语删除——标题与首个模式键之间
+         留出明确呼吸间距（margin 12 + 卡内 gap 10），不再贴着按钮 */
+      .mg-title{ text-align:center; font-size:24px; color:var(--ink); letter-spacing:.12em; margin-bottom:12px; }
       .mg-btn{
         display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
         padding:10px 12px; min-height:58px; background:transparent; border:1px solid var(--ink-12);
@@ -1864,6 +1866,25 @@
         .score-close{ display:none; }
         body.score-open .score-close, body.immersive .score-close{ display:inline-flex; }
       }
+      /* ---------- Y 轮：棋谱面板标题行定型占位，收起键永不压内容 ----------
+         收起键是 absolute 浮层（top:10 + 高 36，下沿落在面板顶 +46），
+         而标题行旧版高度由 h2 的字体行盒派生（20px 字号行盒可低至
+         ~24px），面板顶 padding 12 + 行盒 24 + 下距 4 = 内容首行从
+         +40 起、比键下沿还高 6px——第一行右侧的黑方键（常是当前步
+         高亮卡）就钻到收起键底下被压（用户实拍：炮2进7 高亮卡右上
+         角被收起键盖住；≤640 抽屉旧补丁只给列表加 margin-top 8，
+         净空只剩 2px、随字体度量漂移仍会被吃掉）。
+         修法：凡收起键在场的表面（沉浸面板全宽 + ≤640 窗口抽屉），
+         标题行写死 36px 高、与键同高同线，内容一律从标题行下方开始：
+         沉浸内容顶 = 12 + 36 + 4 = +52，键下沿 +46 之下留 6px 净空；
+         抽屉再加列表 margin-top 8，净空 14px。列表在自身盒内滚动
+         裁切、盒顶已在键下——0 步、1 步、多步滚动，任何一行都钻不到
+         键底下。桌面窗口版收起键恒隐藏（display:none），标题行维持
+         既有 30px 写死规则，不走此路 */
+      body.immersive .score h2{ height:36px; line-height:36px; }
+      @media (max-width:640px){
+        body:not(.immersive) .score h2{ height:36px; line-height:36px; }
+      }
     </style>
   </head>
   <body>
@@ -2130,7 +2151,7 @@
          逻辑（含闯关 VS 横幅），不另设第二套状态 -->
     <div class="modegate" id="modeGate" hidden>
       <div class="mg-card">
-        <div class="mg-title calli" id="gateTitle">把棋盘搬进水墨画里</div>
+        <div class="mg-title calli" id="gateTitle">墨弈 · 水墨棋局</div>
         <button type="button" class="mg-btn" id="gatePvp"><span class="mg-name" id="gatePvpName">双人对局</span><span class="mg-sub" id="gatePvpSub">和朋友面对面 · 下一局热乎的</span></button>
         <button type="button" class="mg-btn" id="gateAi"><span class="mg-name" id="gateAiName">人机对战</span><span class="mg-sub" id="gateAiSub">三档 AI · 从陪练到高手，陪你慢慢变强</span></button>
         <button type="button" class="mg-btn" id="gateLadder"><span class="mg-name" id="gateLadderName">闯关</span><span class="mg-sub" id="gateLadderSub">连闯八位高手 · 看看你能赢到第几关</span></button>
@@ -2862,7 +2883,7 @@
         aboutHTML: '墨弈，是<b>把棋盘搬进水墨画里</b>：楚河漢界、远山苍松，落子有声、吃子有震，赢了还给你盖一枚朱印。点开就能下——会走子，就能上桌。红方先行，落子无悔，悔棋按钮除外。',
         firstHint: '点自己的子，再点发光的墨点落子', rulesTitle: '本桌家规',
         rulesHTML: '红方先行。落子只看棋子本身的走法：<b>将军只是提醒</b>——被将可以不理，走完自家将被攻击的「送将」也允许。胜负由实吃定：<b>吃掉对方将/帅获胜</b>；无子可走（困毙）判负。同一局面第三次出现时裁定：长将、长捉等连续进攻判负，将/帅与兵/卒的追吃、双方互将等情形判和，第二次出现先预警。开钟时局时耗尽转入每步 30 秒读秒，超时判负；悔棋不退已扣时间。',
-        menuBtn: '菜单', scoreBtn: '棋谱', undoBtn: '悔棋', restartBtn: '重开', restartConfirmShort: '确认', gateTitle: '把棋盘搬进水墨画里', gatePvpSub: '和朋友面对面 · 下一局热乎的', gateAiSub: '三档 AI · 从陪练到高手，陪你慢慢变强', gateLadderSub: '连闯八位高手 · 看看你能赢到第几关', sheetAbout: '关于墨弈', fsExit: '退出全屏', boardAria: '中国象棋棋盘',
+        menuBtn: '菜单', scoreBtn: '棋谱', undoBtn: '悔棋', restartBtn: '重开', restartConfirmShort: '确认', gateTitle: '墨弈 · 水墨棋局', gatePvpSub: '和朋友面对面 · 下一局热乎的', gateAiSub: '三档 AI · 从陪练到高手，陪你慢慢变强', gateLadderSub: '连闯八位高手 · 看看你能赢到第几关', sheetAbout: '关于墨弈', fsExit: '退出全屏', boardAria: '中国象棋棋盘',
         ranks: ['初窥门径', '登堂入室', '小有所成', '炉火纯青', '登峰造极', '独步天下'],
         recPrefixW: '墨弈执白', recPrefixB: '墨弈执黑', recWin: '胜', recLoss: '负', recDraw: '和',
         recMate: '将杀', recAdj: '裁定', recRep: '三次重复', parenL: '（', parenR: '）',
@@ -2911,7 +2932,7 @@
         aboutHTML: '墨弈，是<b>把棋盤搬進水墨畫裡</b>：楚河漢界、遠山蒼松，落子有聲、吃子有震，贏了還給你蓋一枚朱印。點開就能下——會走子，就能上桌。紅方先行，落子無悔，悔棋按鈕除外。',
         firstHint: '點自己的子，再點亮起的墨點落子', rulesTitle: '本桌家規',
         rulesHTML: '紅方先行。落子只看棋子本身的走法：<b>將軍只是提醒</b>——被將可以不理，走完自家將被攻擊的「送將」也允許。勝負由實吃定：<b>吃掉對方將/帥獲勝</b>；無子可走（困斃）判負。同一局面第三次出現時裁定：長將、長捉等連續進攻判負，將/帥與兵/卒的追吃、雙方互將等情形判和，第二次出現先預警。開鐘時局時耗盡轉入每步 30 秒讀秒，超時判負；悔棋不退已扣時間。',
-        menuBtn: '選單', scoreBtn: '棋譜', undoBtn: '悔棋', restartBtn: '重開', restartConfirmShort: '確認', gateTitle: '把棋盤搬進水墨畫裡', gatePvpSub: '和朋友面對面 · 下一局熱乎的', gateAiSub: '三檔 AI · 從陪練到高手，陪你慢慢變強', gateLadderSub: '連闖八位高手 · 看看你能贏到第幾關', sheetAbout: '關於墨弈', fsExit: '退出全屏', boardAria: '中國象棋棋盤',
+        menuBtn: '選單', scoreBtn: '棋譜', undoBtn: '悔棋', restartBtn: '重開', restartConfirmShort: '確認', gateTitle: '墨弈 · 水墨棋局', gatePvpSub: '和朋友面對面 · 下一局熱乎的', gateAiSub: '三檔 AI · 從陪練到高手，陪你慢慢變強', gateLadderSub: '連闖八位高手 · 看看你能贏到第幾關', sheetAbout: '關於墨弈', fsExit: '退出全屏', boardAria: '中國象棋棋盤',
         ranks: ['初窺門徑', '登堂入室', '小有所成', '爐火純青', '登峰造極', '獨步天下'],
         recPrefixW: '墨弈執白', recPrefixB: '墨弈執黑', recWin: '勝', recLoss: '負', recDraw: '和',
         recMate: '將殺', recAdj: '裁定', recRep: '三次重複', parenL: '（', parenR: '）',
@@ -2960,7 +2981,7 @@
         aboutHTML: 'Moyi puts the board <b>inside an ink painting</b>: the Chu River and Han Border, distant mountains and pines. Moves land with sound, captures buzz, and a win earns you a vermilion seal. Open it and play — if you know the moves, you are ready. Red moves first; no take-backs, except with Undo.',
         firstHint: 'Tap one of your pieces, then tap a glowing dot', rulesTitle: 'House Rules',
         rulesHTML: 'Red moves first. A move only has to obey the piece\'s own movement: <b>check is a warning, not a lock</b> — you may ignore it, and may even leave your own general under attack. Games are decided by actual capture: <b>take the opposing general to win</b>; having no move left (stalemate) loses. On the third repetition of a position, perpetual check or perpetual chase loses for the attacking side, while cycles driven by generals or pawns, or mutual checks, are drawn — the second repetition brings a warning first. With the clock on, once your game time runs out each move gets a 30-second byoyomi; running out loses, and undoing never refunds time.',
-        menuBtn: 'Menu', scoreBtn: 'Moves', undoBtn: 'Undo', restartBtn: 'New', restartConfirmShort: 'Confirm', gateTitle: 'Step Into an Ink Painting', gatePvpSub: 'Face to face with a friend · One warm game', gateAiSub: '3 levels · Practice to master, growing with you', gateLadderSub: 'Eight masters in a row · How far can you get?', sheetAbout: 'About Moyi', fsExit: 'Exit Fullscreen', boardAria: 'Xiangqi board',
+        menuBtn: 'Menu', scoreBtn: 'Moves', undoBtn: 'Undo', restartBtn: 'New', restartConfirmShort: 'Confirm', gateTitle: 'Moyi · Ink Xiangqi', gatePvpSub: 'Face to face with a friend · One warm game', gateAiSub: '3 levels · Practice to master, growing with you', gateLadderSub: 'Eight masters in a row · How far can you get?', sheetAbout: 'About Moyi', fsExit: 'Exit Fullscreen', boardAria: 'Xiangqi board',
         ranks: ['First Steps', 'Finding Form', 'Rising Strength', 'Polished Craft', 'Peak Form', 'Unmatched'],
         recPrefixW: 'Moyi as White', recPrefixB: 'Moyi as Black', recWin: 'Won', recLoss: 'Lost', recDraw: 'Drew',
         recMate: 'checkmate', recAdj: 'adjudication', recRep: 'threefold repetition', parenL: '(', parenR: ')',
@@ -3009,7 +3030,7 @@
         aboutHTML: '墨弈は<b>棋盤を水墨画の中へ</b>運んだシャンチーです。楚河漢界、遠山と蒼松——着手には音、駒取りには振動、勝てば朱印が押されます。開けばすぐ対局。歩き方を知っていれば、もう座れます。赤の先手、待ったなし——「待った」ボタンを除いて。',
         firstHint: '自分の駒をタップし、光る墨点をタップ', rulesTitle: 'この卓のルール',
         rulesHTML: '赤の先手。着手は駒本来の動きだけに従います：<b>王手は警告にすぎません</b>——受けなくてもよく、自分の将/帥が攻撃される手（送将）も指せます。勝敗は実取りで決まります：<b>相手の将/帥を取れば勝ち</b>；指す手がなければ（困斃）負け。同一局面が3回目に現れたとき裁定します：長将・長捉などの連続攻撃は攻め側の負け、将/帥と兵/卒による追いや双方の王手が続く循環は引き分け、2回目で先に警告します。時計を使うときは、局時が尽きると1手30秒の秒読みに入り、時間切れは負けです。待ったで時間は戻りません。',
-        menuBtn: 'メニュー', scoreBtn: '棋譜', undoBtn: '待った', restartBtn: '新規', restartConfirmShort: '確認', gateTitle: '棋盤を水墨画の中へ', gatePvpSub: '友達と向かい合って · 温かい一局を', gateAiSub: 'AI 3段階 · 練習相手から上級まで、一緒に強くなる', gateLadderSub: '八人の名手に連戦 · どこまで勝ち進める？', sheetAbout: '墨弈について', fsExit: '全画面を終了', boardAria: 'シャンチー棋盤',
+        menuBtn: 'メニュー', scoreBtn: '棋譜', undoBtn: '待った', restartBtn: '新規', restartConfirmShort: '確認', gateTitle: '墨弈 · 水墨の棋盤', gatePvpSub: '友達と向かい合って · 温かい一局を', gateAiSub: 'AI 3段階 · 練習相手から上級まで、一緒に強くなる', gateLadderSub: '八人の名手に連戦 · どこまで勝ち進める？', sheetAbout: '墨弈について', fsExit: '全画面を終了', boardAria: 'シャンチー棋盤',
         ranks: ['初歩', '上達', '小成', '円熟', '絶頂', '天下無双'],
         recPrefixW: '墨弈は白', recPrefixB: '墨弈は黒', recWin: '勝ち', recLoss: '負け', recDraw: '引き分け',
         recMate: 'チェックメイト', recAdj: '裁定', recRep: '三度の繰り返し', parenL: '（', parenR: '）',
