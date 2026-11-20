@@ -55,6 +55,16 @@
         /* 入口门墨雾罩色：--veil 是配 backdrop-filter 的轻罩，--veil-solid
            是无 backdrop-filter 环境的加深回退罩（同为纸色、透明度更高） */
         --veil:rgba(244,237,218,.34); --veil-solid:rgba(244,237,218,.7);
+        /* V 轮观感：--line-soft 是交互控件的边线档（比装饰发丝线 --ink-12
+           深一档、比模式段框 --ink-40 浅一档），只给可点控件的边框用，
+           与虚线分隔拉开主次；--board-hi 是盘面中央的一层极淡纸光（与
+           棋子面高光同色），只作 background 叠层、不动盘面几何；
+           --grain 是与 body::before 同一张纸纹（同一 data URI）；原供
+           浮层纸面共用，V 轮修正后浮层已不再引用（实机噪点糊字，见
+           文件末尾修正注释），变量保留备查、勿再往浮层上铺 */
+        --line-soft:rgba(34,29,21,.24);
+        --board-hi:rgba(253,248,231,.55);
+        --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.13 0 0 0 0 0.11 0 0 0 0.07 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23p)'/%3E%3C/svg%3E");
         color-scheme: light;
       }
       @media (prefers-color-scheme: dark){
@@ -69,6 +79,8 @@
           --piece-face:#f4ecd6;
           --shadow:rgba(0,0,0,.5);
           --veil:rgba(31,27,20,.44); --veil-solid:rgba(31,27,20,.78);
+          --line-soft:rgba(234,223,194,.26);
+          --board-hi:rgba(234,223,194,.05);
           color-scheme: dark;
         }
       }
@@ -89,7 +101,7 @@
 
       /* ---------- 页首 ---------- */
       .hero{ text-align:center; padding:34px 0 0; }
-      .hero .emblem{ width:118px; height:118px; object-fit:cover; object-position:center; border-radius:50%; box-shadow:0 6px 24px var(--shadow); }
+      .hero .emblem{ width:118px; height:118px; object-fit:cover; object-position:center; border-radius:50%; box-shadow:0 6px 24px var(--shadow), 0 0 0 1px var(--ink-12); }
       .hero h1{ font-family:"Ma Shan Zheng","Noto Serif SC",serif; font-weight:400; font-size:clamp(56px,10vw,96px); line-height:1.05; margin:10px 0 2px; letter-spacing:.06em; }
       /* 副标「楚河漢界」里的漢：马善政字体全字库（7,015 字逐字核 cmap）根本没有漢字形，
          旧栈第二位就是通用 serif，漢只能落系统回退——日文系统上顶上的是日文明朝体的日式漢，
@@ -145,8 +157,11 @@
       /* ---------- 象棋棋盘 ---------- */
       .boardwrap{ position:relative; width:100%; max-width:600px; margin:0 auto; }
       .board{
-        position:relative; width:100%; aspect-ratio:96/106; background:var(--board-bg);
-        box-shadow:0 14px 40px var(--shadow), inset 0 0 0 1px var(--ink-12);
+        position:relative; width:100%; aspect-ratio:96/106;
+        /* V 轮：盘面中央叠一层极淡纸光（--board-hi，与棋子面高光同色），
+           纸面不再是一块平色；只动 background 叠层与投影，盘面几何与线稿不动 */
+        background:radial-gradient(120% 92% at 50% 30%, var(--board-hi), transparent 62%), var(--board-bg);
+        box-shadow:0 14px 40px var(--shadow), 0 2px 8px var(--shadow), inset 0 0 0 1px var(--ink-12);
         border-radius:3px; touch-action:none; user-select:none; -webkit-user-select:none; overflow:hidden;
       }
       /* 老 WebView 不支持 aspect-ratio 时的回退：棋盘靠 padding 撑出高度、棋子用百分比定高，绝不塌成 0 高 */
@@ -665,7 +680,8 @@
          层内永远只有一个主动作（朱砂实心、一次直达），内容按模式×
          胜负互斥切换（paintOverBtn）：双人/人机=再来一局、闯关胜=
          下一关（带去向关号）、闯关负/和=再战本关、通关=回榜选关、
-         残局=同题再试。层内不放悔棋——悔棋全视野只留常驻位单实例
+         残局未解=同题再试、残局解开=恭喜行 + 下一题（末题=题目
+         列表，AA 轮）。层内不放悔棋——悔棋全视野只留常驻位单实例
          （btnUndo / mbUndo / fsUndo）；次按钮只在残局终局作「题目
          列表」竖排在主钮下方、小而安静，绝不与主钮同行并排。
          防误触：浮层出现后约 0.5s 内主/次钮不接受点击（JS
@@ -703,6 +719,15 @@
         background:transparent; border:1px solid var(--ink-12); color:var(--ink-60); letter-spacing:.06em;
       }
       .overbar .ghost:hover{ background:var(--ink-06); color:var(--ink-80); }
+      /* 恭喜行（AA 轮）：残局解开时主钮上方的一行朱砂贺词，与盘面
+         右下的题名印同喜不同位；hidden 时零占位，主钮位置不移 */
+      .overbar .over-msg{
+        font-family:"Noto Serif SC",serif; font-size:19px; font-weight:900;
+        letter-spacing:.1em; color:var(--verm); white-space:nowrap;
+      }
+      .overbar .over-msg[hidden]{ display:none; }
+      body[data-lang="zh-TW"] .overbar .over-msg{ font-family:"Noto Serif TC","Noto Sans TC","PingFang TC",serif; }
+      body[data-lang="ja"] .overbar .over-msg{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN",serif; }
       /* ---------- 对局时钟面（默认关，开启才显示） ----------
          状态行两端各一枚：上钟 = 棋盘上方一侧、下钟 = 下方一侧（随视图翻转
          互换），色点分红黑；行棋方高亮（.on），读秒中或剩余 <10 秒转朱砂（.low）。
@@ -784,6 +809,20 @@
       .score::before{ content:""; position:absolute; left:0; top:6px; bottom:6px; width:5px; border-radius:3px; background:linear-gradient(var(--ink-40),var(--ink-12),var(--ink-40)); }
       .score h2{ font-family:"Ma Shan Zheng",serif; font-weight:400; font-size:25px; margin:0 0 4px; letter-spacing:.14em; }
       .score .capline{ font-size:13px; color:var(--ink-60); margin:0 0 10px; }
+      /* X 轮「回到对局」槽：高度写死恒占位，按钮常驻槽内——非浏览时
+         置灰禁用（槽位的目的先写在脸上），浏览中点亮可用；状态切换
+         只动 opacity/disabled，在场/不在场时 .score 内部与棋盘、周边
+         rect 逐值一致（定型纪律）。按钮口径与 .score-close 同族
+         （衬线、胶囊、墨线），可用时以朱砂字标明它是离开浏览的正路 */
+      .score .browsebar{ flex:none; height:44px; display:flex; align-items:center; margin:0 0 6px; }
+      .score .browsebar button{
+        display:inline-flex; align-items:center; min-height:36px; padding:4px 16px;
+        background:var(--ink-06); border:1px solid var(--ink-40); border-radius:999px;
+        color:var(--verm); font-size:13.5px; font-weight:700; font-family:"Noto Serif SC",serif; cursor:pointer;
+        opacity:.38;
+      }
+      .score .browsebar button[disabled]{ cursor:default; }
+      body.browsing .score .browsebar button{ opacity:1; }
       /* 棋谱容器高度固定、只在容器内部滚动：新增行永不撑高容器、永不推动页面——
          跟随最新一步只准由 JS 设容器自身 scrollTop，全站禁用 scrollIntoView */
       .movelist{ height:440px; overflow-y:auto; padding-right:6px; scrollbar-width:thin; scrollbar-color:var(--ink-40) transparent; }
@@ -802,6 +841,11 @@
       }
       .mrow button:hover{ background:var(--ink-06); }
       .mrow button.cur{ background:var(--ink); color:var(--paper); font-weight:600; }
+      /* X 轮浏览高亮口径：.cur（实心墨底）永远只标对局现状（最新一步）；
+         正在看的那一步走朱砂内环 + 朱砂字（.viewing）——一个是「局在哪」、
+         一个是「眼在哪」，两色两形一眼可分，浏览中两者同时在场 */
+      .mrow button.viewing{ box-shadow:inset 0 0 0 2px var(--verm); color:var(--verm); font-weight:700; }
+      .mrow button.viewing .cap{ color:var(--verm); }
       .mrow button .cap{ color:var(--verm); font-size:12px; }
       .mrow button.cur .cap{ color:#f0a294; }
       .empty-note{ color:var(--ink-60); font-size:13.5px; font-family:"Noto Serif SC",serif; padding:8px 0; }
@@ -1384,6 +1428,14 @@
         body:not(.immersive) .statusline .hint{ order:5; }
         body.clk-on:not(.immersive) .statusline .hint{ display:none; }
         body.clk-on:not(.immersive) .statusline .pos{ flex:1 1 auto; }
+        /* 残局提示键排位（用户授权实测后补）：键此前无 order，flex
+           默认 0 把它排到双钟之前、独占首行右端，与次行 .pos 的
+           题名行错行（手机单行与沉浸 order:6 都无此问题，唯桌面
+           窗口中招）。补 order:6 钉在状态文字之后，并让残局下
+           .pos 改弹性行（同 clk-on 口径），键与题名同行、键居
+           行末；仅残局作用——其余模式键恒 hidden、.pos 维持整行 */
+        body.pzmode:not(.immersive) .statusline .pos{ flex:1 1 auto; }
+        body.pzmode:not(.immersive) .statusline .hintbtn{ order:6; }
         body:not(.immersive) .trays{ height:56px; overflow:hidden; }
         body:not(.immersive) .score h2{ font-size:20px; }
         .toolbar .side-hint{ color:var(--ink-60); font-size:13.5px; }
@@ -1859,6 +1911,57 @@
       @media (min-width:1024px){
         body.immersive .freetools{ display:none; }
       }
+
+      /* ---------- V 轮观感迭代（纯视觉层） ----------
+         本轮只动油漆、不动骨架：全部改动限于 background / box-shadow /
+         border-color / font-weight 四类绘制属性——盒尺寸、位置、内距、
+         边框宽度、字号一律未动，各表面 rect 与改前逐值一致。口径五条：
+         ① 浮层纸面（门卡 / 模式弹窗 / 语言列表 / 关于面板 / 沉浸棋谱
+         与信息面板 / 手机棋谱抽屉）原统一铺页面同款纸纹（--grain）；
+         该条已被本文件末尾的「V 轮修正（纸纹降噪）」撤销——实机
+         渲染噪点糊没小字，浮层一律回到无纹纯纸（见该处注释）；
+         ② 可点控件的边线统一深一档到 --line-soft（危险 / 待确认态的
+         朱砂边由各自更高特异性规则照旧接管），与人物行 / 梯队行的
+         --ink-12 虚线分隔拉开主次：实线找控件、虚线只分行；
+         ③ 分段控件的选中态添一圈内嵌发丝环（inset box-shadow），
+         淡墨底之外再有一道「按下去」的印记，三处分段同制；
+         ④ 朱砂实心面（胜印 / 解题印 / 成就小印 / 终局主钮 / 弹窗
+         主钮）添一道顶部内高光与内洇影，呈印泥 / 漆面的压印感，
+         色值不动；
+         ⑤ 门卡与模式弹窗添内衬框线（inset 双环），如装裱的纸心；
+         底栏添一道极淡上影，与棋盘区之间多一层纸边。深色主题同制：
+         变量已在深色 :root 备同名档，纸纹与浅色同图（与 body::before
+         深色下沿用同图的既有口径一致） */
+      /* V 轮修正（纸纹降噪）：浮层纸面一律回到无纹纯纸。原写法把
+         --grain 以 background-image 全强度直铺浮层：该纹理是 SVG
+         feTurbulence 滤镜图，部分 WebView 对背景图滤镜的渲染与桌面
+         浏览器不一致，实机上噪点远重于设计值（深色下闯关弹窗小字
+         「已胜 / 当前关 / 尚未挑战」、手机棋谱抽屉「尚未落子」行
+         已被糊没，用户实拍为证）。浮层承载的恰是全页最小的字，
+         可读性优先于纸面气息——纹理整层撤掉，只保留本轮其余四条
+         （边线 / 内环 / 印泥高光 / 内衬框线与投影）。页面本底的
+         body::before 纸纹是独立叠层、不在浮层内，不受此条影响 */
+      .mg-card, .modepop, .langpop, .aboutpanel,
+      body.immersive .score, body.immersive #menuPanel{ background-image:none; }
+      @media (max-width:640px){
+        body:not(.immersive) .score{ background-image:none; }
+      }
+      .mg-card, .modepop, .langpop, .aboutpanel,
+      body.immersive .score, body.immersive #menuPanel,
+      .freetools button, .mobilebar button, .mp-seg, .mp-gate,
+      .statusline .hintbtn, .mg-btn, .panel-close, .score-close,
+      body.immersive .score-close, .overbar .ghost, .fstopbar .fst-seg{ border-color:var(--line-soft); }
+      .mg-card{ box-shadow:0 18px 44px var(--shadow), 0 3px 10px var(--shadow), inset 0 0 0 4px var(--paper), inset 0 0 0 5px var(--ink-12); }
+      .modepop{ box-shadow:0 18px 44px var(--shadow), 0 3px 10px var(--shadow), inset 0 0 0 4px var(--paper), inset 0 0 0 5px var(--ink-12); }
+      .modeswitch .seg button.on, .fstopbar .fst-seg button.on, .mp-seg button.on{ box-shadow:inset 0 0 0 1px var(--ink-12); }
+      .stamp.win, .stamp.seal{ box-shadow:inset 0 0 14px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.18); }
+      .pzseal.solid{ box-shadow:inset 0 0 8px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.18); }
+      .pzseal.ghost{ border-color:var(--ink-40); }
+      .overbar .again{ box-shadow:0 8px 22px var(--shadow), inset 0 1px 0 rgba(255,255,255,.22); }
+      .mp-act{ box-shadow:inset 0 1px 0 rgba(255,255,255,.22); }
+      .mp-act.ghost{ box-shadow:none; }
+      .mobilebar{ box-shadow:0 -10px 24px -18px var(--shadow); }
+      .hero .note{ font-weight:500; }
     </style>
   </head>
   <body>
@@ -1995,13 +2098,17 @@
                  任一终局（认输/吃将/困毙/绝杀）落定后当场出现——层内只有
                  一个主按钮居盘面正中，一次直达（无二次确认），内容按
                  模式×胜负互斥切换（再来一局 / 下一关·带关号 / 再战本关 /
-                 回榜选关 / 残局同题再试，paintOverBtn 同步）。层内不放
+                 回榜选关 / 残局未解同题再试·解开下一题，paintOverBtn
+                 同步）。层内不放
                  悔棋：悔棋只留常驻位单实例；次按钮仅残局终局作「题目
                  列表」竖排主钮下方（hidden 由 paintOverBtn 管）。只在
                  body.game-over 时显示；绝对定位零布局参与——终局前后
                  棋盘 rect 逐值不变。出现后约 0.5s 内两钮不接受点击
                  （overClickArmed 定时器闸防误触，见 btnAgain 处理器） -->
             <div class="overbar" id="overBar">
+              <!-- 恭喜行（AA 轮）：仅残局解开时在主钮上方亮一行，
+                   其余终局恒 hidden、零占位（paintOverBtn 同步） -->
+              <div class="over-msg" id="overMsg" hidden></div>
               <button type="button" id="btnAgain" class="again">再来一局</button>
               <button type="button" id="btnOverUndo" class="ghost" hidden>题目列表</button>
             </div>
@@ -2054,7 +2161,10 @@
 
         <aside class="score">
           <h2 class="calli" id="scoreTitle">棋谱</h2>
-          <p class="capline" id="scoreCap">每一步都记在这儿，逐笔落墨——点任意一步，就能回到那一刻，换个走法重来。</p>
+          <p class="capline" id="scoreCap">每一步都记在这儿，逐笔落墨——点任意一步，只读回看那一刻，不改动对局；点「回到对局」回到最新一步。</p>
+          <!-- X 轮：只读浏览的「回到对局」定型预留槽——槽位恒占位（44px 写死），
+               浏览中才亮出按钮，按钮显隐不许引起棋盘与周边任何布局位移 -->
+          <div class="browsebar"><button type="button" id="btnBackLive" disabled>回到对局</button></div>
           <button type="button" class="score-close" id="scoreClose">收起</button>
           <div class="movelist" id="moveList"></div>
         </aside>
@@ -2121,7 +2231,7 @@
         <div class="achgrid" id="achGrid"></div>
         <div class="about"><p id="aboutText">墨弈，是<b>把棋盘搬进水墨画里</b>：楚河漢界、远山苍松，落子有声、吃子有震，赢了还给你盖一枚朱印。点开就能下——会走子，就能上桌。红方先行，落子无悔，悔棋按钮除外。</p></div>
         <h3 class="calli" id="rulesTitle">本桌家规</h3>
-        <div class="about"><p id="rulesText">红方先行。落子只看棋子本身的走法：<b>将军只是提醒</b>——被将可以不理，走完自家将被攻击的「送将」也允许。胜负由实吃定：<b>吃掉对方将/帅获胜</b>；无子可走（困毙）判负。同一局面第三次出现时裁定：长将、长捉等连续进攻判负，将/帅与兵/卒的追吃、双方互将等情形判和，第二次出现先预警。开钟时局时耗尽转入每步 30 秒读秒，超时判负；悔棋不退已扣时间。</p></div>
+        <div class="about"><p id="rulesText">红方先行。落子只看棋子本身的走法：<b>将军只是提醒</b>——被将可以不理，走完自家将被攻击的「送将」也允许。胜负由实吃定：<b>吃掉对方将/帅获胜</b>；无子可走（困毙）判负；轮到行棋时正被将军、且无任何一手能解将（避将、垫将、吃掉将军的子、反吃对方将/帅、飞将都算能解），即<b>绝杀</b>判负。同一局面第三次出现时裁定：长将、长捉等连续进攻判负，将/帅与兵/卒的追吃、双方互将等情形判和，第二次出现先预警。开钟时局时耗尽转入每步 30 秒读秒，超时判负；悔棋不退已扣时间。</p></div>
         <footer>墨弈 · 水墨棋局</footer>
       </div>
     </section>
@@ -2306,7 +2416,8 @@
        不做任何「送将 / 自杀」过滤——走完后自家将/帅正被对方直接攻击、
        将帅照面、被将军时不解将，都允许落子。黑方想自杀可以，红方同样。
        胜负改由实吃定：将/帅被对方真正吃掉才分胜负（见 doMove 的吃将判定），
-       另保留困毙（无任何伪合法步可走）判负与认输。
+       另保留困毙（无任何伪合法步可走）判负与认输。W 轮绝杀是回合开始的
+       终局检验（见 checkmateKeyFor），同样不进着法过滤：本函数恒全量放行。
        pieceAttacks / inCheckB 只用于「将军」提示与九宫脉冲显示，不再拦步。 */
     function legalMoves(st, side){
       return pseudoMoves(st, side);
@@ -2764,6 +2875,7 @@
         pzUnsolved: '未解', pzSolvedTag: '已解', pzSolo: '独立解出', pzHinted: '借助提示',
         pzWinLine: '解题成功', pzFailLine: '本题未解', pzFailSteps: '步数已尽 · 本题未解',
         pzRetry: '再试一次', pzListBtn: '题目列表', pzHintBtn: '提示', pzHintUsed: '提示已用', pzHintFmt: '提示：{t}',
+        pzNextBtn: '下一题', pzCongrats: '解开了，恭喜！',
         pzProgressFmt: '集印 {a} / {b}',
         achTitle: '成就', achLede: '解开一局，就盖一枚朱印——自己想出来的是实心印，靠提示的是淡印。33 枚集着集着就上头，看看你能集到第几枚。',
         achFirst: '首解', achFirstDesc: '集到第一枚印', achHalf: '半壁', achHalfDesc: '解开半数残局', achAll: '全解', achAllDesc: '集满全部残局印',
@@ -2775,8 +2887,8 @@
         opening: '开局 · 红方先行', stepFmt: '第 {n} 步 · {t}', checkTag: '将军',
         hintSelected: '已选子 · 点墨点落子', hintDefault: '点选或拖拽己方棋子落子', hintOver: '对局结束 · 可点棋谱回退，或重开一局',
         trayRed: '红方所获', trayBlack: '黑方所获', trayNone: '尚未开壶',
-        scoreTitle: '棋谱', scoreCap: '每一步都记在这儿，逐笔落墨——点任意一步，就能回到那一刻，换个走法重来。', scoreClose: '收起',
-        scoreEmpty: '尚未落子——红方先行，请。', capMark: '吃',
+        scoreTitle: '棋谱', scoreCap: '每一步都记在这儿，逐笔落墨——点任意一步，只读回看那一刻，不改动对局；点「回到对局」回到最新一步。', scoreClose: '收起',
+        scoreEmpty: '尚未落子——红方先行，请。', capMark: '吃', backToGame: '回到对局',
         restartConfirm: '确认', resign: '认输', again: '再来一局', overPerpR: '长将判负 · 黑方胜', overPerpB: '长将判负 · 红方胜', overChaseR: '长捉判负 · 黑方胜', overChaseB: '长捉判负 · 红方胜', perpWarn: '长将长捉预警 · 再重复一次，连续进攻方判负', overTimeR: '超时判负 · 黑方胜', overTimeB: '超时判负 · 红方胜', clockLab: '计时', clockOff: '不计时', clockSd: '包干', clockByo: '包干+读秒', clockGame: '局时', clockMove: '步时', clockByoLab: '读秒', moveUnlimited: '不限', minUnit: ' 分', secUnit: ' 秒',
         ladderTitle: '江湖人物榜', ladderLede: '八位高手已经排开，从手生到深不见底——连闯八关，看看你能赢到第几关。赢一位，你的棋力就往上走一格。',
         powerLabel: '棋力', matLabel: '子力对比',
@@ -2784,7 +2896,7 @@
         aboutTitle: '关于墨弈',
         aboutHTML: '墨弈，是<b>把棋盘搬进水墨画里</b>：楚河漢界、远山苍松，落子有声、吃子有震，赢了还给你盖一枚朱印。点开就能下——会走子，就能上桌。红方先行，落子无悔，悔棋按钮除外。',
         firstHint: '点自己的子，再点发光的墨点落子', rulesTitle: '本桌家规',
-        rulesHTML: '红方先行。落子只看棋子本身的走法：<b>将军只是提醒</b>——被将可以不理，走完自家将被攻击的「送将」也允许。胜负由实吃定：<b>吃掉对方将/帅获胜</b>；无子可走（困毙）判负。同一局面第三次出现时裁定：长将、长捉等连续进攻判负，将/帅与兵/卒的追吃、双方互将等情形判和，第二次出现先预警。开钟时局时耗尽转入每步 30 秒读秒，超时判负；悔棋不退已扣时间。',
+        rulesHTML: '红方先行。落子只看棋子本身的走法：<b>将军只是提醒</b>——被将可以不理，走完自家将被攻击的「送将」也允许。胜负由实吃定：<b>吃掉对方将/帅获胜</b>；无子可走（困毙）判负；轮到行棋时正被将军、且无任何一手能解将（避将、垫将、吃掉将军的子、反吃对方将/帅、飞将都算能解），即<b>绝杀</b>判负。同一局面第三次出现时裁定：长将、长捉等连续进攻判负，将/帅与兵/卒的追吃、双方互将等情形判和，第二次出现先预警。开钟时局时耗尽转入每步 30 秒读秒，超时判负；悔棋不退已扣时间。',
         infoBtn: '信息', scoreBtn: '棋谱', undoBtn: '悔棋', restartBtn: '重开', restartConfirmShort: '确认', gateTitle: '墨弈 · 水墨棋局', gatePvpSub: '和朋友面对面 · 下一局热乎的', gateAiSub: '三档 AI · 从陪练到高手，陪你慢慢变强', gateLadderSub: '连闯八位高手 · 看看你能赢到第几关', sheetAbout: '关于墨弈', fsExit: '退出全屏', boardAria: '中国象棋棋盘',
         ranks: ['初窥门径', '登堂入室', '小有所成', '炉火纯青', '登峰造极', '独步天下'],
         recPrefixW: '墨弈执白', recPrefixB: '墨弈执黑', recWin: '胜', recLoss: '负', recDraw: '和',
@@ -2813,6 +2925,7 @@
         pzUnsolved: '未解', pzSolvedTag: '已解', pzSolo: '獨立解出', pzHinted: '借助提示',
         pzWinLine: '解題成功', pzFailLine: '本題未解', pzFailSteps: '步數已盡 · 本題未解',
         pzRetry: '再試一次', pzListBtn: '題目列表', pzHintBtn: '提示', pzHintUsed: '提示已用', pzHintFmt: '提示：{t}',
+        pzNextBtn: '下一題', pzCongrats: '解開了，恭喜！',
         pzProgressFmt: '集印 {a} / {b}',
         achTitle: '成就', achLede: '解開一局，就蓋一枚朱印——自己想出來的是實心印，靠提示的是淡印。33 枚集著集著就上頭，看看你能集到第幾枚。',
         achFirst: '首解', achFirstDesc: '集到第一枚印', achHalf: '半壁', achHalfDesc: '解開半數殘局', achAll: '全解', achAllDesc: '集滿全部殘局印',
@@ -2824,8 +2937,8 @@
         opening: '開局 · 紅方先行', stepFmt: '第 {n} 步 · {t}', checkTag: '將軍',
         hintSelected: '已選子 · 點墨點落子', hintDefault: '點選或拖拽己方棋子落子', hintOver: '對局結束 · 可點棋譜回退，或重開一局',
         trayRed: '紅方所獲', trayBlack: '黑方所獲', trayNone: '尚未開壺',
-        scoreTitle: '棋譜', scoreCap: '每一步都記在這兒，逐筆落墨——點任意一步，就能回到那一刻，換個走法重來。', scoreClose: '收起',
-        scoreEmpty: '尚未落子——紅方先行，請。', capMark: '吃',
+        scoreTitle: '棋譜', scoreCap: '每一步都記在這兒，逐筆落墨——點任意一步，只讀回看那一刻，不改動對局；點「回到對局」回到最新一步。', scoreClose: '收起',
+        scoreEmpty: '尚未落子——紅方先行，請。', capMark: '吃', backToGame: '回到對局',
         restartConfirm: '確認', resign: '認輸', again: '再來一局', overPerpR: '長將判負 · 黑方勝', overPerpB: '長將判負 · 紅方勝', overChaseR: '長捉判負 · 黑方勝', overChaseB: '長捉判負 · 紅方勝', perpWarn: '長將長捉預警 · 再重複一次，連續進攻方判負', overTimeR: '超時判負 · 黑方勝', overTimeB: '超時判負 · 紅方勝', clockLab: '計時', clockOff: '不計時', clockSd: '包干', clockByo: '包干+讀秒', clockGame: '局時', clockMove: '步時', clockByoLab: '讀秒', moveUnlimited: '不限', minUnit: ' 分', secUnit: ' 秒',
         ladderTitle: '江湖人物榜', ladderLede: '八位高手已經排開，從手生到深不見底——連闖八關，看看你能贏到第幾關。贏一位，你的棋力就往上走一格。',
         powerLabel: '棋力', matLabel: '子力對比',
@@ -2833,7 +2946,7 @@
         aboutTitle: '關於墨弈',
         aboutHTML: '墨弈，是<b>把棋盤搬進水墨畫裡</b>：楚河漢界、遠山蒼松，落子有聲、吃子有震，贏了還給你蓋一枚朱印。點開就能下——會走子，就能上桌。紅方先行，落子無悔，悔棋按鈕除外。',
         firstHint: '點自己的子，再點亮起的墨點落子', rulesTitle: '本桌家規',
-        rulesHTML: '紅方先行。落子只看棋子本身的走法：<b>將軍只是提醒</b>——被將可以不理，走完自家將被攻擊的「送將」也允許。勝負由實吃定：<b>吃掉對方將/帥獲勝</b>；無子可走（困斃）判負。同一局面第三次出現時裁定：長將、長捉等連續進攻判負，將/帥與兵/卒的追吃、雙方互將等情形判和，第二次出現先預警。開鐘時局時耗盡轉入每步 30 秒讀秒，超時判負；悔棋不退已扣時間。',
+        rulesHTML: '紅方先行。落子只看棋子本身的走法：<b>將軍只是提醒</b>——被將可以不理，走完自家將被攻擊的「送將」也允許。勝負由實吃定：<b>吃掉對方將/帥獲勝</b>；無子可走（困斃）判負；輪到行棋時正被將軍、且無任何一手能解將（避將、墊將、吃掉將軍的子、反吃對方將/帥、飛將都算能解），即<b>絕殺</b>判負。同一局面第三次出現時裁定：長將、長捉等連續進攻判負，將/帥與兵/卒的追吃、雙方互將等情形判和，第二次出現先預警。開鐘時局時耗盡轉入每步 30 秒讀秒，超時判負；悔棋不退已扣時間。',
         infoBtn: '信息', scoreBtn: '棋譜', undoBtn: '悔棋', restartBtn: '重開', restartConfirmShort: '確認', gateTitle: '墨弈 · 水墨棋局', gatePvpSub: '和朋友面對面 · 下一局熱乎的', gateAiSub: '三檔 AI · 從陪練到高手，陪你慢慢變強', gateLadderSub: '連闖八位高手 · 看看你能贏到第幾關', sheetAbout: '關於墨弈', fsExit: '退出全屏', boardAria: '中國象棋棋盤',
         ranks: ['初窺門徑', '登堂入室', '小有所成', '爐火純青', '登峰造極', '獨步天下'],
         recPrefixW: '墨弈執白', recPrefixB: '墨弈執黑', recWin: '勝', recLoss: '負', recDraw: '和',
@@ -2862,6 +2975,7 @@
         pzUnsolved: 'Unsolved', pzSolvedTag: 'Solved', pzSolo: 'Solved unaided', pzHinted: 'Solved with a hint',
         pzWinLine: 'Solved!', pzFailLine: 'Not solved', pzFailSteps: 'Out of moves · Not solved',
         pzRetry: 'Try again', pzListBtn: 'Puzzle list', pzHintBtn: 'Hint', pzHintUsed: 'Hint used', pzHintFmt: 'Hint: {t}',
+        pzNextBtn: 'Next puzzle', pzCongrats: 'Solved — well done!',
         pzProgressFmt: 'Seals {a} / {b}',
         achTitle: 'Achievements', achLede: 'Solve a study, earn its vermilion seal — solid if you found it yourself, pale if you peeked at the hint. Collecting all 33 is quietly addictive — how many can you gather?',
         achFirst: 'First Solve', achFirstDesc: 'Earn your first seal', achHalf: 'Halfway', achHalfDesc: 'Solve half the studies', achAll: 'Full Set', achAllDesc: 'Collect every puzzle seal',
@@ -2873,8 +2987,8 @@
         opening: 'Opening · Red first', stepFmt: 'Move {n} · {t}', checkTag: 'Check',
         hintSelected: 'Selected · Tap a dot to move', hintDefault: 'Tap or drag a piece', hintOver: 'Game over · Rewind via Moves, or start new',
         trayRed: 'Red captured', trayBlack: 'Black captured', trayNone: 'No captures yet',
-        scoreTitle: 'Moves', scoreCap: 'Every move is brushed down here. Tap any move to rewind to that moment and try a different line.', scoreClose: 'Close',
-        scoreEmpty: 'No moves yet — Red to move.', capMark: '×',
+        scoreTitle: 'Moves', scoreCap: 'Every move is brushed down here. Tap any move to look back at that moment — the game itself stays untouched. Tap “Back to game” to return to the latest move.', scoreClose: 'Close',
+        scoreEmpty: 'No moves yet — Red to move.', capMark: '×', backToGame: 'Back to game',
         restartConfirm: 'Confirm', resign: 'Resign', again: 'Play again', overPerpR: 'Perpetual check loses · Black wins', overPerpB: 'Perpetual check loses · Red wins', overChaseR: 'Perpetual chase loses · Black wins', overChaseB: 'Perpetual chase loses · Red wins', perpWarn: 'Perpetual check/chase warning · one more repeat and the attacking side loses', overTimeR: 'Time forfeit · Black wins', overTimeB: 'Time forfeit · Red wins', clockLab: 'Clock', clockOff: 'Off', clockSd: 'Sudden death', clockByo: 'SD + Byoyomi', clockGame: 'Game time', clockMove: 'Per-move cap', clockByoLab: 'Byoyomi', moveUnlimited: 'No cap', minUnit: ' min', secUnit: ' sec',
         ladderTitle: 'Fighters of the Jianghu', ladderLede: 'Eight masters are waiting, from fresh beginner to unfathomable — fight through all eight gates and see how far you get. Beat one, and your strength climbs with you.',
         powerLabel: 'Strength', matLabel: 'Material',
@@ -2882,7 +2996,7 @@
         aboutTitle: 'About Moyi',
         aboutHTML: 'Moyi puts the board <b>inside an ink painting</b>: the Chu River and Han Border, distant mountains and pines. Moves land with sound, captures buzz, and a win earns you a vermilion seal. Open it and play — if you know the moves, you are ready. Red moves first; no take-backs, except with Undo.',
         firstHint: 'Tap one of your pieces, then tap a glowing dot', rulesTitle: 'House Rules',
-        rulesHTML: 'Red moves first. A move only has to obey the piece\'s own movement: <b>check is a warning, not a lock</b> — you may ignore it, and may even leave your own general under attack. Games are decided by actual capture: <b>take the opposing general to win</b>; having no move left (stalemate) loses. On the third repetition of a position, perpetual check or perpetual chase loses for the attacking side, while cycles driven by generals or pawns, or mutual checks, are drawn — the second repetition brings a warning first. With the clock on, once your game time runs out each move gets a 30-second byoyomi; running out loses, and undoing never refunds time.',
+        rulesHTML: 'Red moves first. A move only has to obey the piece\'s own movement: <b>check is a warning, not a lock</b> — you may ignore it, and may even leave your own general under attack. Games are decided by actual capture: <b>take the opposing general to win</b>; having no move left (stalemate) loses; and if, at the start of your turn, your general is in check and no move can lift it — moving the general away, blocking, capturing the checking piece, capturing the opposing general, or the flying-general capture all count — you lose by <b>checkmate</b>. On the third repetition of a position, perpetual check or perpetual chase loses for the attacking side, while cycles driven by generals or pawns, or mutual checks, are drawn — the second repetition brings a warning first. With the clock on, once your game time runs out each move gets a 30-second byoyomi; running out loses, and undoing never refunds time.',
         infoBtn: 'Info', scoreBtn: 'Moves', undoBtn: 'Undo', restartBtn: 'New', restartConfirmShort: 'Confirm', gateTitle: 'Moyi · Ink Xiangqi', gatePvpSub: 'Face to face with a friend · One warm game', gateAiSub: '3 levels · Practice to master, growing with you', gateLadderSub: 'Eight masters in a row · How far can you get?', sheetAbout: 'About Moyi', fsExit: 'Exit Fullscreen', boardAria: 'Xiangqi board',
         ranks: ['First Steps', 'Finding Form', 'Rising Strength', 'Polished Craft', 'Peak Form', 'Unmatched'],
         recPrefixW: 'Moyi as White', recPrefixB: 'Moyi as Black', recWin: 'Won', recLoss: 'Lost', recDraw: 'Drew',
@@ -2911,6 +3025,7 @@
         pzUnsolved: '未解決', pzSolvedTag: '解決済', pzSolo: '自力で解決', pzHinted: 'ヒント使用',
         pzWinLine: '解題成功', pzFailLine: '未解決', pzFailSteps: '手数切れ · 未解決',
         pzRetry: 'もう一度', pzListBtn: '題目一覧', pzHintBtn: 'ヒント', pzHintUsed: 'ヒント使用済', pzHintFmt: 'ヒント：{t}',
+        pzNextBtn: '次の題', pzCongrats: '解けました、お見事！',
         pzProgressFmt: '印 {a} / {b}',
         achTitle: '成就', achLede: '一局解けば、朱印がひとつ——自力なら実印、ヒントを使えば淡印。33個集める手が止まらなくなる。いくつ集められる？',
         achFirst: '初解決', achFirstDesc: '最初の印を集める', achHalf: '半壁', achHalfDesc: '残局の半数を解く', achAll: '全解', achAllDesc: '残局印をすべて集める',
@@ -2922,8 +3037,8 @@
         opening: '対局開始 · 赤の先手', stepFmt: '{n}手目 · {t}', checkTag: '王手',
         hintSelected: '選択中 · 墨点をタップして移動', hintDefault: '自分の駒をタップまたはドラッグ', hintOver: '対局終了 · 棋譜をタップして巻き戻すか、新規対局を',
         trayRed: '赤の取った駒', trayBlack: '黒の取った駒', trayNone: 'まだなし',
-        scoreTitle: '棋譜', scoreCap: '一手ごとにここに刻まれます。手をタップすればその瞬間に戻って、別の手を試せます。', scoreClose: '閉じる',
-        scoreEmpty: 'まだ指していません——赤の先手です。', capMark: '取',
+        scoreTitle: '棋譜', scoreCap: '一手ごとにここに刻まれます。手をタップすればその瞬間を振り返れます——対局そのものは変わりません。「対局に戻る」で最新手に戻ります。', scoreClose: '閉じる',
+        scoreEmpty: 'まだ指していません——赤の先手です。', capMark: '取', backToGame: '対局に戻る',
         restartConfirm: '確認', resign: '投了', again: 'もう一局', overPerpR: '連続王手は負け · 黒の勝ち', overPerpB: '連続王手は負け · 赤の勝ち', overChaseR: '連続追撃で負け · 黒の勝ち', overChaseB: '連続追撃で負け · 赤の勝ち', perpWarn: '連続王手・追撃の警告 · もう一度繰り返すと攻め側の負け', overTimeR: '時間切れで負け · 黒の勝ち', overTimeB: '時間切れで負け · 赤の勝ち', clockLab: '持ち時間', clockOff: 'なし', clockSd: '切れ負け', clockByo: '切れ負け+秒読み', clockGame: '局時間', clockMove: '一手制限', clockByoLab: '秒読み', moveUnlimited: '制限なし', minUnit: '分', secUnit: '秒',
         ladderTitle: '江湖の人物たち', ladderLede: '八人の名手が待ち構える。駆け出しから底知れぬ強者まで——八関連戦、どこまで勝ち進める？ 一人倒せば、あなたの棋力も一歩上がる。',
         powerLabel: '棋力', matLabel: '駒の力',
@@ -2931,7 +3046,7 @@
         aboutTitle: '墨弈について',
         aboutHTML: '墨弈は<b>棋盤を水墨画の中へ</b>運んだシャンチーです。楚河漢界、遠山と蒼松——着手には音、駒取りには振動、勝てば朱印が押されます。開けばすぐ対局。歩き方を知っていれば、もう座れます。赤の先手、待ったなし——「待った」ボタンを除いて。',
         firstHint: '自分の駒をタップし、光る墨点をタップ', rulesTitle: 'この卓のルール',
-        rulesHTML: '赤の先手。着手は駒本来の動きだけに従います：<b>王手は警告にすぎません</b>——受けなくてもよく、自分の将/帥が攻撃される手（送将）も指せます。勝敗は実取りで決まります：<b>相手の将/帥を取れば勝ち</b>；指す手がなければ（困斃）負け。同一局面が3回目に現れたとき裁定します：長将・長捉などの連続攻撃は攻め側の負け、将/帥と兵/卒による追いや双方の王手が続く循環は引き分け、2回目で先に警告します。時計を使うときは、局時が尽きると1手30秒の秒読みに入り、時間切れは負けです。待ったで時間は戻りません。',
+        rulesHTML: '赤の先手。着手は駒本来の動きだけに従います：<b>王手は警告にすぎません</b>——受けなくてもよく、自分の将/帥が攻撃される手（送将）も指せます。勝敗は実取りで決まります：<b>相手の将/帥を取れば勝ち</b>；指す手がなければ（困斃）負け；手番の初めに王手がかかっていて解く手が一手もない場合（将を逃がす・合駒・攻め駒を取る・相手の将/帥を取る・飛将はいずれも解手）は<b>詰み</b>で負け。同一局面が3回目に現れたとき裁定します：長将・長捉などの連続攻撃は攻め側の負け、将/帥と兵/卒による追いや双方の王手が続く循環は引き分け、2回目で先に警告します。時計を使うときは、局時が尽きると1手30秒の秒読みに入り、時間切れは負けです。待ったで時間は戻りません。',
         infoBtn: '情報', scoreBtn: '棋譜', undoBtn: '待った', restartBtn: '新規', restartConfirmShort: '確認', gateTitle: '墨弈 · 水墨の棋盤', gatePvpSub: '友達と向かい合って · 温かい一局を', gateAiSub: 'AI 3段階 · 練習相手から上級まで、一緒に強くなる', gateLadderSub: '八人の名手に連戦 · どこまで勝ち進める？', sheetAbout: '墨弈について', fsExit: '全画面を終了', boardAria: 'シャンチー棋盤',
         ranks: ['初歩', '上達', '小成', '円熟', '絶頂', '天下無双'],
         recPrefixW: '墨弈は白', recPrefixB: '墨弈は黒', recWin: '勝ち', recLoss: '負け', recDraw: '引き分け',
@@ -2950,6 +3065,11 @@
     Object.assign(I18N['zh-TW'], { popClose: '關閉', popResume: '繼續', popContinue: '繼續挑戰', faceLab: '對坐字向', faceRedDown: '同向 · 都朝紅方', faceBlackDown: '對坐 · 黑字朝黑方', faceNote: '兩人面對面共用一台設備時選「對坐」：黑子的字轉過去，正對坐在對面的黑方；選「同向」，兩邊棋子的字都朝紅方一側。' });
     Object.assign(I18N['en'], { popClose: 'Close', popResume: 'Resume', popContinue: 'Continue the Gauntlet', faceLab: 'Piece Lettering', faceRedDown: 'All Face Red', faceBlackDown: 'Black Faces Black', faceNote: 'Sharing one device face-to-face? Pick “Black Faces Black” and Black’s pieces rotate to read upright for the player opposite; “All Face Red” keeps every piece facing Red’s side.' });
     Object.assign(I18N['ja'], { popClose: '閉じる', popResume: '続ける', popContinue: '挑戦を続ける', faceLab: '対面の字向き', faceRedDown: '同向き · 全部赤向き', faceBlackDown: '対面 · 黒は黒向き', faceNote: '一台の端末を向かい合って使うときは「対面」を選ぶと、黒の駒の字が向かいの黒側を向いて正しく読めます。「同向き」では両方の駒の字が赤側を向きます。' });
+    /* 异模式入口主钮文案（BB 轮）：只在弹窗所指模式不是当前模式时出现 */
+    Object.assign(I18N['zh-CN'], { popEnterPvp: '进入双人对局', popEnterAi: '进入人机对战' });
+    Object.assign(I18N['zh-TW'], { popEnterPvp: '進入雙人對局', popEnterAi: '進入人機對戰' });
+    Object.assign(I18N['en'], { popEnterPvp: 'Enter Two-Player Game', popEnterAi: 'Enter vs Computer' });
+    Object.assign(I18N['ja'], { popEnterPvp: '二人対局に入る', popEnterAi: 'コンピュータ対戦に入る' });
     function detectLang(){
       try { const saved = localStorage.getItem('moyi-lang'); if (saved && I18N[saved]) return saved; } catch (e) {}
       const list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
@@ -2979,6 +3099,7 @@
       if (th){ for (let i = 0; i < th.childNodes.length; i++){ if (th.childNodes[i].nodeType === 3) th.childNodes[i].textContent = d.thinking; } }
       set('trayRWho', d.trayRed); set('trayBWho', d.trayBlack);
       set('scoreTitle', d.scoreTitle); set('scoreCap', d.scoreCap); set('scoreClose', d.scoreClose);
+      set('btnBackLive', d.backToGame);
       set('ladderTitle', d.ladderTitle); set('ladderLede', d.ladderLede);
       set('aboutTitle', d.aboutTitle); setH('aboutText', d.aboutHTML);
       set('rulesTitle', d.rulesTitle); setH('rulesText', d.rulesHTML);
@@ -3048,6 +3169,11 @@
     const splash = $('splash'), sctx = splash.getContext ? splash.getContext('2d') : null;
     let states = [initialState()];   // 快照列（含开局）
     let infos = [];                  // 每步 {text, captured, check, from, to}
+    /* X 轮只读浏览偏移：-1 = 棋盘呈对局现状（states 末位）；>=0 时棋盘
+       只呈 states[browsePly] 的视图——states / infos / 存档 / 计时一律
+       不动，浏览不是改局。真实落子（doMove）、截断（jumpTo/悔棋）、
+       重开（resetGame）任一发生即复位 -1；收起棋谱面板同样复位 */
+    let browsePly = -1;
     let sel = -1, legalCache = legalMoves(states[0], 'r');
     let over = false, overKey = '';   // 终局文案只存词典键，render 时按当前语言现取——切语言不残留旧语字符串
     let overClickArmed = false, overArmTimer = null;   // 终局浮层防误触（S 轮）：render 检出 game-over 上升沿时落闸，0.5s 定时器到点才放行浮层两钮——用定时器不用 Date.now 差值：墙钟在某些 WebView/截图环境会被冻结或跳变，定时器口径在任何环境都恒等于真实 0.5s
@@ -3244,7 +3370,11 @@
       // （--ink-60、线宽 2.5、opacity .9；几何半幅/臂长一概不动）——起点
       // 只需「看得出从哪来」，落点才是「棋落在哪」的主信息。两主题同规：
       // 浅色盘上淡墨对赭金同样居次位，不再追求与文字同线的对比
-      const last = infos[infos.length - 1];
+      /* X 轮：浏览中起落标记跟随所看局面（通往该局面的那一步），
+         不再钉在对局最新一步上 */
+      const last = (browsePly >= 0 && browsePly < infos.length)
+        ? (browsePly > 0 ? infos[browsePly - 1] : null)
+        : infos[infos.length - 1];
       if (last){
         const tx = VX(fileOf(last.to)), ty = VY(rowOf(last.to)), C = 47, A = 13;
         for (const [dx, dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
@@ -3299,7 +3429,15 @@
     }
 
     function render(animInfo){
-      const st = cur();
+      /* X 轮：浏览中棋盘（子/托盘/覆盖层/九宫脉冲/回合字）呈所看局面，
+         对局状态（over / 时钟 / 控制锁 / 存档）仍走 cur() 的现状口径；
+         browsePly 越界（理论不可达）时按现状兜底，绝不呈空盘 */
+      const browsing = browsePly >= 0 && browsePly < states.length - 1;
+      const st = browsing ? states[browsePly] : cur();
+      document.body.classList.toggle('browsing', browsing);
+      /* 「回到对局」键的可用态与浏览同生同灭（render 是唯一必经之路）：
+         非浏览恒禁用置灰，浏览中才可点——槽位与按钮盒永不增删 */
+      { const bb = $('btnBackLive'); if (bb) bb.disabled = !browsing; }
       /* 终局动作层与终局同生同灭：body.game-over 是它唯一的显隐开关，
          render 是所有状态变更的必经之路，挂在这里不会漏挂/漏摘。
          上升沿（局中→终局）落防误触闸：浮层出现后约 0.5s 内
@@ -3325,7 +3463,7 @@
          overCap/Mate/Stale 的后缀是胜方，resign 的后缀是认输方（即输家）；
          overDraw 无输家，双方同淡。over 复位（悔棋/跳步/重开）后新子天然无此类 */
       let endLoser = '', endDraw = false;
-      if (over){
+      if (over && !browsing){
         if (overKey === 'overDraw') endDraw = true;
         else if (overKey === 'resignR') endLoser = 'r';
         else if (overKey === 'resignB') endLoser = 'b';
@@ -3343,7 +3481,7 @@
         const el = document.createElement('div');
         /* 一子一框：将军闪字脉冲亮在某一子身上时，那一子（只可能是将/帅）的
            选中环被压住不渲染，闪字熄灭后由 flashCheck 的对账重绘恢复 */
-        el.className = 'piece ' + p.s + (sel === i && !(checkFxOn && sel === checkFxSq) ? ' sel' : '') + (!over && p.s === st.turn && humanTurn() ? ' movable' : '') +
+        el.className = 'piece ' + p.s + (sel === i && !(checkFxOn && sel === checkFxSq) ? ' sel' : '') + (!over && !browsing && p.s === st.turn && humanTurn() ? ' movable' : '') +
           (endLoser && p.s === endLoser ? ' lost' : '') + (endDraw ? ' drawdim' : '');
         el.dataset.sq = i;
         const pos = posPct(i);
@@ -3393,7 +3531,10 @@
         }
       } else {
         $('turnWho').innerHTML = st.turn === 'r' ? LT().turnRedHTML : LT().turnBlackHTML;
-        const last = infos[infos.length - 1];
+        /* X 轮：状态行步数/记谱跟随所看局面（浏览中报「看到第几步」），
+           闯关/残局的关卡与进度口径仍报对局现状，不随浏览变 */
+        const last = browsing ? (browsePly > 0 ? infos[browsePly - 1] : null) : infos[infos.length - 1];
+        const shownN = browsing ? browsePly : infos.length;
         /* 闯关状态区：关卡与排位是主信息（单行、手机/桌面/沉浸同一元素），
            步数退到 hint 位（桌面可见）；非闯关维持原样 */
         if (puzzleMode){
@@ -3404,11 +3545,11 @@
           $('posLabel').textContent = d0.gateFmt.replace('{n}', gate) + ' · ' + gi.name + '（' + gi.elo + '） · ' +
             d0.rankEloFmt.replace('{e}', playerElo()).replace('{m}', bestGate);
         } else {
-          $('posLabel').textContent = last ? LT().stepFmt.replace('{n}', infos.length).replace('{t}', last.text) : LT().opening;
+          $('posLabel').textContent = last ? LT().stepFmt.replace('{n}', shownN).replace('{t}', last.text) : LT().opening;
         }
         /* 将军标记优先；无将军时若刚构成第二次重复且循环带将军，亮长将预警 */
         $('checkTag').textContent = chk ? LT().checkTag : (repetitionWarn(states, infos) ? LT().perpWarn : '');
-        $('hintLabel').textContent = (ladderMode && last ? LT().stepFmt.replace('{n}', infos.length).replace('{t}', last.text) + ' · ' : '') +
+        $('hintLabel').textContent = (ladderMode && last ? LT().stepFmt.replace('{n}', shownN).replace('{t}', last.text) + ' · ' : '') +
           (sel >= 0 ? LT().hintSelected : LT().hintDefault);
         /* 残局提示已给时，状态行提示位报提示记谱（直到本题结束/重开） */
         if (puzzleMode && pzHintText) $('hintLabel').textContent = LT().pzHintFmt.replace('{t}', pzHintText);
@@ -3459,19 +3600,34 @@
         ml.innerHTML = '<p class="empty-note">' + LT().scoreEmpty + '</p>';
         return;
       }
+      /* X 轮高亮口径：.cur 恒标对局现状（最新一步，实心墨底）；浏览中
+         另以 .viewing（朱砂内环）标正在看的那一步——两标可同时在场、
+         互不替代。点步只走 browseTo 只读浏览，永不在此截断对局 */
+      const browsingNow = browsePly >= 0 && browsePly < infos.length;
       for (let n = 0; n * 2 < infos.length; n++){
         const row = document.createElement('div'); row.className = 'mrow';
         let html = '<span class="no">' + (n + 1) + '.</span>';
         for (const off of [0, 1]){
           const k = n * 2 + off, info = infos[k];
           if (!info){ html += '<span></span>'; continue; }
-          html += '<button type="button" data-ply="' + (k + 1) + '" class="' + (k === infos.length - 1 ? 'cur' : '') + '">' +
+          const cls = (k === infos.length - 1 ? 'cur' : '') + (browsingNow && k === browsePly - 1 ? ' viewing' : '');
+          html += '<button type="button" data-ply="' + (k + 1) + '" class="' + cls + '">' +
             info.text + (info.captured ? ' <span class="cap">' + LT().capMark + '</span>' : '') + '</button>';
         }
         row.innerHTML = html; ml.appendChild(row);
       }
-      ml.querySelectorAll('button').forEach(b => b.addEventListener('click', () => jumpTo(+b.dataset.ply)));
-      ml.scrollTop = ml.scrollHeight;
+      ml.querySelectorAll('button').forEach(b => b.addEventListener('click', () => browseTo(+b.dataset.ply)));
+      if (browsingNow){
+        /* 浏览中列表停在所看步附近，不许被每次 render 拽回底部——
+           用容器内坐标算 scrollTop（全站禁用 scrollIntoView 的旧规矩） */
+        const vb = ml.querySelector('button.viewing');
+        if (vb){
+          const lr = ml.getBoundingClientRect(), br = vb.getBoundingClientRect();
+          ml.scrollTop += (br.top - lr.top) - 6;
+        }
+      } else {
+        ml.scrollTop = ml.scrollHeight;
+      }
     }
 
     /* 吃子墨溅 */
@@ -3676,7 +3832,28 @@
         if (moveGaveCheck(sts, infs, k) || moveChaseTargets(sts, infs, k).length) return true;
       return false;
     }
+    /* ================= 绝杀判定（W 轮，用户定版混合方案） =================
+       只在回合开始那一刻多一道终局检验：轮到一方行棋时，若其将/帅正被
+       攻击、且不存在任何一手能解除将军的着法，即绝杀判负、当场结束。
+       「能解」一律按既有正式着法口径（aiFormalMoves，与 AI 思考同源）：
+       避将、垫将/隔将、吃掉将军的子、反吃对方将/帅、将帅照面飞将都算
+       能解（吃将步在正式着法里恒保留，飞将吃将天然在内），不另写判定。
+       只要有一手能解，棋照常下，且行棋全程照旧自由——legalMoves 不做
+       任何过滤，可以不解将、可以送将、照面合法，吃将定胜负原样保留；
+       本检验不进着法生成，只挂在回合开始路径上：doMove 落子后（对方
+       回合开始）与 replayMoves 恢复重演的终局判定（已绝杀存档恢复时
+       当场结束）。残局模式不受影响（自有解题胜负），调用处以
+       puzzleMode 豁免。返回值是终局键（后缀为胜方，与 overStale 同
+       口径），无绝杀时返回空串 */
+    function checkmateKeyFor(st){
+      if (!st) return '';
+      const side = st.turn;
+      if (!inCheckB(st.b, side)) return '';
+      if (aiFormalMoves(st.b, side).length) return '';
+      return side === 'r' ? 'overMateB' : 'overMateR';
+    }
     function doMove(m){
+      browsePly = -1; /* X 轮：任何真实落子（玩家/AI）即退出只读浏览，棋盘回对局现状 */
       disarmConfirms(); /* 回合切换复位两键待确认态（M 轮口径） */
       const st = cur();
       /* 首局提示在玩家落第一步时收起（人机里电脑先行不算） */
@@ -3704,6 +3881,18 @@
         over = true; overKey = 'overDraw';
         render({ from: m.from, to: m.to });
         showStamp('stampDraw', 'pale'); sndEnd(); saveGame(); return;
+      }
+      /* 绝杀（W 轮）：落子后即对方回合开始——对方被将且无一手能解将
+         时当场判负，不等对方再走一步（人机/闯关里 AI 回合开始同理，
+         over 落定后 scheduleAI 不再被调到）。与困毙同格、先于重复
+         裁定；残局豁免（自有解题胜负，仍走下方困毙/步数口径） */
+      if (!puzzleMode){
+        const mk = checkmateKeyFor(ns);
+        if (mk){
+          over = true; overKey = mk;
+          render({ from: m.from, to: m.to });
+          { const os = outcomeStamp(st.turn); showStamp(os[0], os[1]); } sndEnd(); saveGame(); return;
+        }
       }
       if (replies.length === 0){
         over = true;
@@ -3736,6 +3925,7 @@
       scheduleAI();
     }
     function tryMove(from, to){
+      if (browsePly >= 0) return false;             // X 轮：浏览中落子输入失效——不走子、不截断、无声归 tryMove 的调用方处理
       if (!humanTurn()) return false;               // 人机对战时电脑回合不接受玩家落子
       legalCache = legalMoves(cur(), cur().turn);   // 落子判定不信缓存：按当下局面现算，合法即放行
       const m = legalCache.find(x => x.from === from && x.to === to);
@@ -3751,7 +3941,30 @@
       }
       return true;
     }
+    /* ================= X 轮：棋谱只读浏览 =================
+       浏览与改局彻底分开：browseTo 只挪视图偏移（browsePly），完整着法
+       列表、对局状态、存档、时钟、AI 调度一律不动；截断语义只属于
+       jumpTo（悔棋本职，见下）。退出浏览的全部路径：点「回到对局」、
+       点最新一步、收起/关闭棋谱面板（含沉浸面板各关闭路径与进出
+       沉浸）、真实落子、悔棋截断、重开/切模式——用户永不被搁在浏览
+       视图里无路可回 */
+    function browseTo(ply){
+      /* 点中最新一步 = 回到对局现状：退出浏览并沿旧口径关掉棋谱
+         抽屉回到棋盘（点按必须有确定结果） */
+      if (ply >= infos.length){ exitBrowse(); try { closeSheets(); } catch (e) {} return; }
+      browsePly = ply;
+      sel = -1; hoverSq = -1;
+      clearCheckFx(); /* 将军闪字是现状的特效，钉在旧局面子身上不许带进浏览视图 */
+      render(null);
+    }
+    function exitBrowse(){
+      if (browsePly < 0) return;
+      browsePly = -1; sel = -1;
+      clearCheckFx();
+      render(null);
+    }
     function jumpTo(ply){
+      browsePly = -1; /* 截断即改局：浏览偏移先复位，下方按截断后局面重绘 */
       /* 点中最新一步（已是当前局面）：没有可回退的余地，但点按必须有
          确定结果——关掉棋谱抽屉回到棋盘，而不是看似可点、点了没反应 */
       if (ply >= infos.length){ try { closeSheets(); } catch (e) {} return; }
@@ -3821,6 +4034,10 @@
         const st = sts[sts.length - 2], ns = sts[sts.length - 1], last = infs[infs.length - 1];
         if (last.captured && last.captured.t === 'K'){ ov = true; key = st.turn === 'r' ? 'overCapR' : 'overCapB'; }
         else if (!hasAttackers(ns, 'r') && !hasAttackers(ns, 'b')){ ov = true; key = 'overDraw'; }
+        /* 绝杀恢复（W 轮）：重演终局判定与 doMove 同一套——最后局面
+           是行棋方的回合开始，被将且无解即按绝杀落定，已绝杀存档
+           恢复时当场结束；残局豁免与 doMove 同口径 */
+        else if (!puzzleMode && checkmateKeyFor(ns)){ ov = true; key = checkmateKeyFor(ns); }
         else if (legalMoves(ns, ns.turn).length === 0){
           ov = true;
           key = last.check ? (st.turn === 'r' ? 'overMateR' : 'overMateB') : (st.turn === 'r' ? 'overStaleR' : 'overStaleB');
@@ -4295,6 +4512,7 @@
       try { disarmConfirms(); } catch (e) {} /* 新局/切模式一律复位待确认态 */
       cancelAI();
       states = [puzzleMode ? pzStartState() : initialState()]; infos = []; sel = -1;
+      browsePly = -1; /* X 轮：新局无旧谱可浏览，偏移复位 */
       over = false; overKey = '';
       /* 新尝试（重开/再试/切题/重进）：提示已用标记重置为未用 */
       pzHintUsed = false; pzSettled = false; pzHintSq = -1; pzHintText = '';
@@ -4360,6 +4578,9 @@
          不全覆盖，在此把口径钉死——面板开着不许拖子点子） */
       if (!$('modeGate').hidden || !$('modePop').hidden || !$('panelBack').hidden ||
           document.body.classList.contains('fs-menu-open') || document.body.classList.contains('fs-score-open')) return;
+      /* X 轮：只读浏览中棋盘输入整体失效——点子点格都不走子、不截断，
+         只给与终局点盘同款的 deny 回执（墨环 + 短音），不留无声点按 */
+      if (browsePly >= 0){ const sqB = boardPoint(ev); if (sqB >= 0) tapDeny(sqB); return; }
       if (over){ const sqO = boardPoint(ev); if (sqO >= 0) tapDeny(sqO); return; }
       /* 输入自愈：点按落下先对一次账再处理——已轮到玩家、思考标记却还
          挂着（AI 收尾链异常中断的残留）→ 清掉；轮到电脑却没有任何计时器
@@ -4488,7 +4709,7 @@
     /* 桌面鼠标悬停：选中子后，指针移到合法落点上亮高亮环并变指针光标（触控不参与） */
     boardEl.addEventListener('pointermove', ev => {
       if (ev.pointerType !== 'mouse') return;
-      if ((drag && drag.active) || sel < 0 || over){ if (hoverSq !== -1){ hoverSq = -1; boardEl.style.cursor = ''; renderOverlay(); } return; }
+      if ((drag && drag.active) || sel < 0 || over || browsePly >= 0){ if (hoverSq !== -1){ hoverSq = -1; boardEl.style.cursor = ''; renderOverlay(); } return; }
       const sq = boardPoint(ev);
       const nh = (sq >= 0 && legalCache.some(x => x.from === sel && x.to === sq)) ? sq : -1;
       if (nh !== hoverSq){ hoverSq = nh; boardEl.style.cursor = nh >= 0 ? 'pointer' : ''; renderOverlay(); }
@@ -4569,7 +4790,8 @@
        不同、互不影响）。内容按模式×胜负互斥（paintOverBtn 于 render
        每次同步）：双人/人机=再来一局、闯关胜（未通关）=下一关（文案
        带去向关号）、闯关胜第 8 关=回榜选关、闯关负/和=再战本关、
-       残局=同题再试。悔棋不在层内——全视野只留常驻位单实例；次
+       残局未解=同题再试、解开=下一题（末题主钮即题目列表，AA
+       轮）。悔棋不在层内——全视野只留常驻位单实例；次
        按钮只在残局终局作「题目列表」竖排主钮下方出现 */
     function paintOverBtn(){
       const b = $('btnAgain'); if (!b) return;
@@ -4577,8 +4799,20 @@
       /* 次按钮定型：仅残局终局可见（题目列表），其余模式/状态一律收起，
          层内只剩主动作一个钮居中——主钮定型尺寸不随次钮显隐变化 */
       if (u) u.hidden = !(puzzleMode && over);
+      /* 恭喜行（AA 轮）：仅残局解开时亮，其余一切终局恒收起 */
+      const pzSolved = puzzleMode && over && isRedWinKey(overKey);
+      const msg = $('overMsg');
+      if (msg){ msg.hidden = !pzSolved; if (pzSolved) msg.textContent = LT().pzCongrats; }
       if (puzzleMode){
-        b.textContent = over ? LT().pzRetry : LT().again;
+        /* AA 轮：解开 → 主钮「下一题」（按题库顺序直达）；末题无
+           下一题 → 主钮换「题目列表」、次钮收起（不与主钮同文）；
+           未解 → 主钮仍是同题再试，逐字旧口径 */
+        if (pzSolved && puzzleIdx >= PUZZLES.length - 1){
+          b.textContent = LT().pzListBtn;
+          if (u) u.hidden = true;
+        } else {
+          b.textContent = over ? (pzSolved ? LT().pzNextBtn : LT().pzRetry) : LT().again;
+        }
         if (u) u.textContent = LT().pzListBtn;
         return;
       }
@@ -4598,6 +4832,13 @@
          已全部可点（bestGate=8 自由选关），点任意关即经既有行点按路径
          开新局并亮 VS 横幅，中间无多余状态 */
       if (ladderMode && over && isRedWinKey(overKey) && gate >= 8){ openAbout(); return; }
+      /* 残局解开（AA 轮）：主钮「下一题」按题库顺序一击直达下一题
+         （走 setMode 既有换题路径：清缓存 + 墨幕 + 重开）；末题主钮
+         即「题目列表」，回关于面板选题，与次钮同路 */
+      if (puzzleMode && over && isRedWinKey(overKey)){
+        if (puzzleIdx < PUZZLES.length - 1){ setMode('puzzle', puzzleIdx + 1); return; }
+        openPuzzleList(); return;
+      }
       /* 闯关「下一关」：关号先行进一关再开新局（纪录已在终局结算时落存）；
          「再战本关」与非闯关「再来一局」都是原关/原设置直接重开 */
       if (ladderMode && over && isRedWinKey(overKey) && gate < 8) gate += 1;
@@ -4991,6 +5232,7 @@
       /* 棋谱/菜单面板都是沉浸专属浮层：进出沉浸都回到关态，窗口模式永不残留 */
       document.body.classList.remove('fs-score-open');
       document.body.classList.remove('fs-menu-open');
+      try { exitBrowse(); } catch (e) {} /* X 轮：面板随沉浸进出关闭 = 退出浏览 */
       closeLangPop(); /* 语言列表同为浮层：簇换家时不许悬在旧表面上 */
       syncCluster(); /* 图标簇先换家，syncFsChrome 的主动作槽锚点才找得到它 */
       syncFsChrome();
@@ -5083,11 +5325,12 @@
     $('fsScoreBtn').addEventListener('click', () => {
       const open = document.body.classList.toggle('fs-score-open');
       if (open) document.body.classList.remove('fs-menu-open');
+      else exitBrowse(); /* X 轮：沉浸棋谱面板关 = 退出浏览回最新步 */
     });
     /* 顶栏菜单键（仅桌面沉浸可达）：与棋谱面板互斥，开一个关另一个 */
     $('fsMenuBtn').addEventListener('click', () => {
       const open = document.body.classList.toggle('fs-menu-open');
-      if (open) document.body.classList.remove('fs-score-open');
+      if (open){ document.body.classList.remove('fs-score-open'); exitBrowse(); }
     });
     /* 顶栏常驻三键 + 模式段（仅桌面全屏可达）：与底栏/抽屉同一纪律，
        全是遥控器——转发给原控件，原处理与 paint 照旧跑，状态不分家 */
@@ -5119,6 +5362,7 @@
       }
       document.body.classList.remove('fs-score-open');
       document.body.classList.remove('fs-menu-open');
+      exitBrowse(); /* X 轮：点面板外关面板 = 退出浏览回最新步 */
       e.stopPropagation();
       e.preventDefault();
     }, true);
@@ -5179,7 +5423,13 @@
        弹窗、计时只在双人/人机弹窗、闯关与残局无计时。计时是纯设置：
        点了即按旧口径生效（双钟重置、棋局不动）、弹窗不关；其余选项
        点了即提交并关弹窗——跨模式时按既有新局语义开局，同模式时按
-       旧行为（换难度不重开、换执子重开、对坐只翻字向不重开） */
+       旧行为（换难度不重开、换执子重开、对坐只翻字向不重开）。
+       异模式入口主钮（BB 轮）：双人/人机弹窗在非本模式打开时，底部
+       出「进入…」主钮——弹窗其余控件都长得像纯设置（座位是字向、
+       计时只应用），用户找不到入口（闯关→双人实报）；主钮按弹窗当前
+       已选状态（同一份状态的现值）直达 setMode 开局，与模式门冷启动
+       进入同语义；本模式时不出此钮、弹窗保持纯设置。闯关弹窗的
+       「继续挑战」与残局的题目列表本就是明示入口，不在此列 */
     let popKey = null;
     function clockSegHTML(d){
       const on = v => (v === 'off' ? clockMode === 'off' : (clockMode !== 'off' && clockGameMin === +v)) ? ' on' : '';
@@ -5200,6 +5450,7 @@
           '<button type="button" data-act="face" data-v="1" class="' + (faceOff ? 'on' : '') + '">' + d.faceBlackDown + '</button></span></div>';
         h += '<p class="mp-info sub">' + d.faceNote + '</p>';
         h += clockSegHTML(d);
+        if (mode !== 'pvp') h += '<button type="button" class="mp-act" data-act="enter">' + d.popEnterPvp + '</button>';
       } else if (key === 'ai'){
         h += '<div class="mp-row"><span class="mp-lab">' + d.difficulty + '</span><span class="mp-seg">' +
           [1, 2, 3].map(n => '<button type="button" data-act="diff" data-v="' + n + '" class="' + (aiDiff === n ? 'on' : '') + '">' + d['diff' + n] + '</button>').join('') + '</span></div>';
@@ -5207,6 +5458,7 @@
           '<button type="button" data-act="side" data-v="r" class="' + (playerSide === 'r' ? 'on red' : '') + '">' + d.red + '</button>' +
           '<button type="button" data-act="side" data-v="b" class="' + (playerSide === 'b' ? 'on' : '') + '">' + d.black + '</button></span></div>';
         h += clockSegHTML(d);
+        if (mode !== 'ai' || ladderMode || puzzleMode) h += '<button type="button" class="mp-act" data-act="enter">' + d.popEnterAi + '</button>';
       } else if (key === 'ladder'){
         const cg = Math.min(bestGate + 1, 8), gi = LADDER[cg - 1] || LADDER[0];
         h += '<p class="mp-info">' + d.gateFmt.replace('{n}', cg) + ' · ' + gi.name + ' · ' + d.powerLabel + ' ' + gi.elo + '</p>';
@@ -5235,6 +5487,7 @@
       $('modePop').hidden = false;
       document.body.classList.remove('fs-score-open');
       document.body.classList.remove('fs-menu-open');
+      try { exitBrowse(); } catch (e) {} /* X 轮：模式弹窗开、棋谱面板关 = 退出浏览 */
       try { closeLangPop(); } catch (e) {}
     }
     function closeModePop(){
@@ -5282,6 +5535,15 @@
         setMode('ladder', cg);
         return;
       }
+      if (act === 'enter'){
+        /* 异模式入口主钮（BB 轮）：按弹窗当前已选状态提交——双人带
+           座位（faceOff 现值）+ 计时（共享偏好现值），人机带难度/执子
+           现值；全部只读现值、不改任何偏好，直达 setMode 开新局 */
+        closeModePop();
+        if (popKey === 'pvp') setMode('pvp');
+        else if (popKey === 'ai') setMode('ai');
+        return;
+      }
       if (act === 'resume'){ closeModePop(); return; } /* 残局进行中：关弹窗即续局，局面原样 */
       if (act === 'pick'){ closeModePop(); openPuzzleList(); return; }
     });
@@ -5312,10 +5574,13 @@
       $('sheetBack').hidden = !document.body.classList.contains('score-open');
     }
     function closeSheets(){
+      /* X 轮：收起棋谱面板 = 退出只读浏览回最新步——浏览入口只在棋谱
+         面板里，面板一关就不许把用户搁在浏览视图里无路可回 */
+      try { exitBrowse(); } catch (e) {}
       document.body.classList.remove('score-open');
       document.body.classList.remove('fs-menu-open');
-      /* 沉浸棋谱面板与抽屉同归 closeSheets 收口：点步跳步（jumpTo）、
-         切模式等既有路径关抽屉时，面板一并关、回棋盘 */
+      /* 沉浸棋谱面板与抽屉同归 closeSheets 收口：关面板即退出只读
+         浏览回最新步（X 轮；截断只属于悔棋的 jumpTo，不走这里） */
       document.body.classList.remove('fs-score-open');
       paintSheets();
       fitScoreSheet();
@@ -5373,9 +5638,13 @@
     $('mbScore').addEventListener('click', () => {
       const willOpen = !document.body.classList.contains('score-open');
       document.body.classList.toggle('score-open', willOpen);
+      if (!willOpen) exitBrowse(); /* X 轮：抽屉收起 = 退出浏览回最新步 */
       paintSheets();
       fitScoreSheet();
     });
+    /* X 轮「回到对局」：一击退出只读浏览回最新步，面板保持打开、
+       棋盘局面与浏览前逐子一致（states/infos 从未被浏览碰过） */
+    $('btnBackLive').addEventListener('click', () => { exitBrowse(); });
     $('scoreClose').addEventListener('click', closeSheets);
     $('sheetBack').addEventListener('click', closeSheets);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
