@@ -1280,6 +1280,20 @@
         .boardcol{ display:flex; flex-direction:column; position:relative; min-width:0; min-height:calc(100vh - 66px); min-height:calc(100svh - 66px); }
         .boardcol .boardwrap{ margin-top:auto; margin-bottom:auto; }
         .turnline{ margin-bottom:6px; height:30px; min-height:30px; flex-wrap:nowrap; overflow:hidden; }
+        /* CC 轮（用户真机实报）：手机窗口回合字「红方行棋」骑高——本行
+           继承基础规则的 align-items:baseline，30px 定高里唯一可见的
+           .who 被基线钉在行顶，墨迹中心实测在行心上方约 5px（390 宽
+           浅色渲染量盒：字墨重心 y≈26.0/25.5（中/英），同行关于键与
+           图标簇墨重心齐在 y≈31.0）；而同文案在沉浸顶栏（flex 居中）
+           量得 30.6、与同行严丝合缝——病根就是本行的对齐方式，不是
+           字号也不是簇位。修法只限手机窗口表面：整行改竖直居中（与
+           沉浸顶栏同口径）——修复后同法复量：字墨重心 y≈31.1，与行心
+           31.0 严丝合缝（文楷子集行高约 1.28em，居中即到位，不再叠
+           位移修正）。回合行 30px 定高、簇与关于键的 -7px 骑行位、
+           .tip 隐藏、.thinking 绝对居中（top:50% 自带 translate）全
+           不动；桌面窗口回合行是双行栈、沉浸各档另有居中/隐藏口径，
+           都不在本规则命中面 */
+        body:not(.immersive) .turnline{ align-items:center; }
         /* 手机窗口的常驻图标簇（修正轮几何中立落位）：不进回合行文档流
            （回合行恒 30px 定高 = v74），簇绝对定位骑在对局列右上、与
            回合行竖直居中同高——44 盒上下各溢出 7px：上溢出落进舞台顶
