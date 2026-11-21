@@ -675,9 +675,10 @@
       body[data-lang="ja"] .firsthint{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN","YuMincho",serif; }
       @media (prefers-reduced-motion: reduce){ .firsthint{ transition:none; } }
       /* ---------- 终局主动作层（overbar）：棋盘中央薄雾浮层（S 轮） ----------
-         DD 轮例外：绝杀终局本层整层退场（body.mate-end 关显示），结果
-         与主钮改走底部小条（见下方 .matebar DD 轮样式注）；其余终局
-         （吃将/认输/超时/困毙/长将长捉/残局）照旧走本层，一字未动。
+         FF 轮：绝杀终局与吃将等终局共用本层（同盒同几何同主钮），只多
+         一段约 1s 前奏——前奏期本层暂不放行（见下方绝杀呈现样式注），
+         棋盘先亮将杀关系；其余终局（吃将/认输/超时/困毙/长将长捉/
+         残局）照旧落定即现本层，一字未动。
          终局主动作的家从棋盘下方各表面槽位迁到棋盘正中：本层是
          .boardwrap 内的绝对浮层（inset:0 只盖棋盘区），只在
          body.game-over（render 按 over 同步）时出现，局中零占位、
@@ -738,38 +739,29 @@
       .overbar .over-msg[hidden]{ display:none; }
       body[data-lang="zh-TW"] .overbar .over-msg{ font-family:"Noto Serif TC","Noto Sans TC","PingFang TC",serif; }
       body[data-lang="ja"] .overbar .over-msg{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN",serif; }
-      /* ---------- 绝杀底部小条（DD 轮）：只限绝杀终局的结果出口 ----------
-         绝杀时中央浮层整层退场（body.mate-end 关掉 .overbar 的显示，棋盘
-         一寸不遮），结果与主钮改走本条：住在托盘盒（#trays）内部的绝对
-         覆盖层——托盘盒在各表面都是定高/定格（手机窗口 min-height 56、
-         桌面窗口 height 56、沉浸是网格 trays 格），小条在状态栈自有空间
-         内解决高度，出现前后棋盘盒、模式段、工具行、底栏逐像素不动。
-         显隐只认 body.mate-bar-on（render 在绝杀落定约 1s 后置位、终局
-         解除即摘），局中恒 display:none、零占位零残留。主钮与浮层主钮
-         同定型（48 高 / 196 最小宽 / 朱砂实心），文案与动作同源
-         （paintMateBar 镜像 paintOverBtn 的结果，click 共用
-         overMainAction 与同一道 overClickArmed 防误触闸） */
-      body.mate-end .overbar{ display:none; }
-      .matebar{
-        position:absolute; inset:0; z-index:3; display:none;
-        align-items:center; justify-content:space-between; gap:12px;
-        background:var(--paper); padding:0 2px;
+      /* ---------- 绝杀呈现（FF 轮）：前奏 + 同款中央浮层 ----------
+         DD 的底部小条方案作废、EE 一并取消：绝杀改走与吃将完全同一套
+         中央浮层，只在放行时机上多一段前奏——判定落定后约 1s 内，
+         body.mate-end 已挂而 mate-over-on 未挂，本规则压住 game-over
+         的浮层显示，棋盘全可见（给将子朱砂环、将被将脉冲 hold、九宫
+         脉冲、状态行原因句先行亮明将杀关系，均为 DD 已验部分）；约
+         1s 后 render 的定时器挂 mate-over-on，浮层按吃将口径照常
+         淡入（同盒 inset:0、同主钮、同防误触闸、同动作矩阵）。
+         浮层内绝杀专属一行明话（.over-note）：专答新人「将没被吃
+         怎么就输了」——绝对定位钉在居中主钮正上方，不进浮层流内
+         布局：主钮位置与吃将浮层逐像素一致，浮层盒几何一字不动；
+         文案一行放不下在本行内折两行、向上生长。显隐与文案由
+         paintOverBtn 按绝杀态同步，非绝杀恒 hidden、零残留 */
+      body.mate-end:not(.mate-over-on) .overbar{ display:none; }
+      .overbar .over-note{
+        position:absolute; left:50%; transform:translateX(-50%);
+        bottom:calc(50% + 36px); width:max-content; max-width:82%;
+        font-family:"Noto Serif SC",serif; font-size:13px; line-height:1.65;
+        letter-spacing:.04em; color:var(--ink-80); text-align:center;
       }
-      body.mate-bar-on .matebar{ display:flex; animation:overIn .3s ease both; }
-      @media (prefers-reduced-motion: reduce){ body.mate-bar-on .matebar{ animation:none; } }
-      .matebar .matebar-txt{
-        font-family:"Noto Serif SC",serif; font-weight:700; font-size:15.5px; color:var(--ink);
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;
-      }
-      .matebar .again{
-        min-height:48px; min-width:196px; padding:10px 30px; font-size:15.5px;
-        background:var(--verm); border:1px solid var(--verm); color:#fff; font-weight:700; letter-spacing:.08em;
-        border-radius:3px; cursor:pointer; font-family:"Noto Serif SC",serif; white-space:nowrap; flex:none;
-        box-shadow:0 8px 22px var(--shadow), inset 0 1px 0 rgba(255,255,255,.22);
-      }
-      .matebar .again:active{ filter:brightness(1.12); }
-      body[data-lang="zh-TW"] .matebar, body[data-lang="zh-TW"] .matebar button{ font-family:"Noto Serif TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif; }
-      body[data-lang="ja"] .matebar, body[data-lang="ja"] .matebar button{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN","YuMincho",serif; }
+      .overbar .over-note[hidden]{ display:none; }
+      body[data-lang="zh-TW"] .overbar .over-note{ font-family:"Noto Serif TC","Noto Sans TC","PingFang TC",serif; }
+      body[data-lang="ja"] .overbar .over-note{ font-family:"Noto Serif JP","Noto Sans JP","Hiragino Mincho ProN",serif; }
       /* ---------- 对局时钟面（默认关，开启才显示） ----------
          状态行两端各一枚：上钟 = 棋盘上方一侧、下钟 = 下方一侧（随视图翻转
          互换），色点分红黑；行棋方高亮（.on），读秒中或剩余 <10 秒转朱砂（.low）。
@@ -795,8 +787,8 @@
       }
       body[data-lang="zh-TW"] .clk{ font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; }
       body[data-lang="ja"] .clk{ font-family:"Noto Sans JP","Hiragino Sans",sans-serif; }
-      /* position:relative 只为绝杀小条（.matebar）提供锚点：小条是本盒内的
-         绝对覆盖层，在托盘自有高度里解决占位（DD 轮），盒本身几何不变 */
+      /* position:relative 为 DD 轮小条锚点而设；FF 轮小条退场后盒内
+         已无绝对覆盖层，此定位保留无害（盒本身几何不变） */
       .trays{ display:flex; flex-direction:column; gap:2px; margin-top:12px; min-height:56px; position:relative; }
       .trays .tray{ display:flex; gap:10px; align-items:center; flex-wrap:nowrap; min-height:26px; }
       .trays .who{ font-size:12px; color:var(--ink-60); letter-spacing:.2em; font-family:"Noto Serif SC",serif; white-space:nowrap; }
@@ -2153,9 +2145,9 @@
             <!-- 首局操作提示：只在第一局选完模式后亮一次（自消失），见 .firsthint 与 showFirstHint -->
             <div class="firsthint" id="firstHint" hidden>点自己的子，再点发光的墨点落子</div>
             <!-- 终局主动作层（S 轮）：棋盘中央薄雾浮层，四表面同一个家。
-                 终局（认输/吃将/困毙/长将长捉等）落定后当场出现——绝杀
-                 除外（DD 轮：绝杀不遮棋盘，浮层整层退场，结果与主钮改
-                 走托盘盒内的底部小条 #mateBar，见 .matebar 样式注）——层内只有
+                 终局（认输/吃将/困毙/长将长捉等）落定后当场出现；绝杀
+                 （FF 轮）先走约 1s 前奏（棋盘不遮、先亮将杀关系），随后
+                 走本层同一套浮层，只多一行绝杀明话 #overNote——层内只有
                  一个主按钮居盘面正中，一次直达（无二次确认），内容按
                  模式×胜负互斥切换（再来一局 / 下一关·带关号 / 再战本关 /
                  回榜选关 / 残局未解同题再试·解开下一题，paintOverBtn
@@ -2169,6 +2161,10 @@
               <!-- 恭喜行（AA 轮）：仅残局解开时在主钮上方亮一行，
                    其余终局恒 hidden、零占位（paintOverBtn 同步） -->
               <div class="over-msg" id="overMsg" hidden></div>
+              <!-- 绝杀明话（FF 轮）：仅绝杀终局在主钮上方亮一行规则解释，
+                   绝对定位不进流内布局（见 .over-note 样式注），显隐与
+                   文案由 paintOverBtn 按绝杀态同步 -->
+              <div class="over-note" id="overNote" hidden></div>
               <button type="button" id="btnAgain" class="again">再来一局</button>
               <button type="button" id="btnOverUndo" class="ghost" hidden>题目列表</button>
             </div>
@@ -2215,16 +2211,6 @@
           <div class="trays" id="trays" aria-label="已吃棋子">
             <div class="tray"><span class="who" id="trayRWho">红方所获</span><span class="pcs" id="trayR"></span></div>
             <div class="tray"><span class="who" id="trayBWho">黑方所获</span><span class="pcs" id="trayB"></span></div>
-            <!-- 绝杀底部小条（DD 轮）：只在绝杀终局落定约 1s 后由
-                 body.mate-bar-on 点亮（见 .matebar 样式注）——结果文案
-                 （#mateTxt，与状态行/回合行同出 overKey 词典）+ 主钮
-                 （#btnMateAgain，与浮层主钮同文案同动作同防误触闸，
-                 paintMateBar / overMainAction 同源）。绝杀之外恒不显示；
-                 覆盖的只是托盘盒自身，棋盘与底栏零参与 -->
-            <div class="matebar" id="mateBar">
-              <span class="matebar-txt" id="mateTxt"></span>
-              <button type="button" id="btnMateAgain" class="again">再来一局</button>
-            </div>
           </div>
           <div class="matbal" id="matBal"></div>
         </div>
@@ -2974,6 +2960,7 @@
         overCapR: '吃将 · 红胜', overCapB: '吃将 · 黑胜', overDraw: '和棋 · 双方无子可攻',
         overMateR: '绝杀 · 红胜', overMateB: '绝杀 · 黑胜', overStaleR: '困毙 · 红胜', overStaleB: '困毙 · 黑胜',
         mateWhyR: '红方被将军，无任何一步能解将 · 绝杀', mateWhyB: '黑方被将军，无任何一步能解将 · 绝杀',
+        mateNote: '将帅不必被吃：将正被将军、怎么走都解不开，就是绝杀判负。',
         resignR: '红方认输 · 黑胜', resignB: '黑方认输 · 红胜',
         stampWin: '胜', stampLose: '负', stampDraw: '和',
         traysLabel: '已吃棋子', quickBarLabel: '对局快捷栏',
@@ -3025,6 +3012,7 @@
         overCapR: '吃將 · 紅勝', overCapB: '吃將 · 黑勝', overDraw: '和棋 · 雙方無子可攻',
         overMateR: '絕殺 · 紅勝', overMateB: '絕殺 · 黑勝', overStaleR: '困斃 · 紅勝', overStaleB: '困斃 · 黑勝',
         mateWhyR: '紅方被將軍，無任何一步能解將 · 絕殺', mateWhyB: '黑方被將軍，無任何一步能解將 · 絕殺',
+        mateNote: '將帥不必被吃：將正被將軍、怎麼走都解不開，就是絕殺判負。',
         resignR: '紅方認輸 · 黑勝', resignB: '黑方認輸 · 紅勝',
         stampWin: '勝', stampLose: '負', stampDraw: '和',
         traysLabel: '已吃棋子', quickBarLabel: '對局快捷欄',
@@ -3076,6 +3064,7 @@
         overCapR: 'General captured · Red wins', overCapB: 'General captured · Black wins', overDraw: 'Draw · Neither side can attack',
         overMateR: 'Checkmate · Red wins', overMateB: 'Checkmate · Black wins', overStaleR: 'Stalemate · Red wins', overStaleB: 'Stalemate · Black wins',
         mateWhyR: 'Red in check — no move can lift it · Checkmate', mateWhyB: 'Black in check — no move can lift it · Checkmate',
+        mateNote: 'The general need not be captured: in check, with no move that can lift it, is checkmate — a loss.',
         resignR: 'Red resigned · Black wins', resignB: 'Black resigned · Red wins',
         stampWin: '胜', stampLose: '负', stampDraw: '和',
         traysLabel: 'Captured pieces', quickBarLabel: 'Game shortcuts',
@@ -3127,6 +3116,7 @@
         overCapR: '将を取り · 赤の勝ち', overCapB: '将を取り · 黒の勝ち', overDraw: '引き分け · 双方攻撃できず',
         overMateR: '詰み · 赤の勝ち', overMateB: '詰み · 黒の勝ち', overStaleR: '行き詰まり · 赤の勝ち', overStaleB: '行き詰まり · 黒の勝ち',
         mateWhyR: '赤に王手、解く手なし · 詰み', mateWhyB: '黒に王手、解く手なし · 詰み',
+        mateNote: '将帥は取られなくても負け：将に王手がかかり、どう指しても解けないのが絶殺（詰み）です。',
         resignR: '赤が投了 · 黒の勝ち', resignB: '黒が投了 · 赤の勝ち',
         stampWin: '勝', stampLose: '負', stampDraw: '和',
         traysLabel: '取った駒', quickBarLabel: '対局ショートカット',
@@ -3251,7 +3241,7 @@
     let sel = -1, legalCache = legalMoves(states[0], 'r');
     let over = false, overKey = '';   // 终局文案只存词典键，render 时按当前语言现取——切语言不残留旧语字符串
     let overClickArmed = false, overArmTimer = null;   // 终局浮层防误触（S 轮）：render 检出 game-over 上升沿时落闸，0.5s 定时器到点才放行浮层两钮——用定时器不用 Date.now 差值：墙钟在某些 WebView/截图环境会被冻结或跳变，定时器口径在任何环境都恒等于真实 0.5s
-    let mateBarTimer = null;   // 绝杀小条延时（DD 轮）：render 检出绝杀上升沿时起表，约 1s 后才给 body 挂 mate-bar-on 亮出小条；终局解除（悔棋/重开/切模式）即清表摘类，口径与 overArmTimer 同（定时器、不用墙钟差值）
+    let mateOverTimer = null;  // 绝杀浮层延时（FF 轮）：render 检出绝杀上升沿时起表，约 1s 前奏（棋盘不遮、先亮将杀关系）后才给 body 挂 mate-over-on 放行中央浮层；终局解除（悔棋/重开/切模式）即清表摘类，口径与 overArmTimer 同（定时器、不用墙钟差值）
     let mateRingSqs = [];      // 绝杀给将子的格位列（DD 轮）：render 按终局局面现算（checkingAttackers）、renderOverlay 只管照单绘制；非绝杀/浏览旧局面时恒空
     let endFadeToken = 0;   // 终局褪灰令牌：render 重建子后延迟挂 .fade-on 触发缓褪，旧令牌作废防叠加
     const cur = () => states[states.length - 1];
@@ -3535,22 +3525,24 @@
         if (overArmTimer) clearTimeout(overArmTimer);
         overArmTimer = setTimeout(() => { overClickArmed = true; }, 500);
       }
-      /* 绝杀呈现开关（DD 轮）：绝杀只认 overKey（W 轮判定与存档重演共用
-         同一事实源——doMove 落定、replayMoves 恢复都收敛到这里），残局
-         豁免（其 overMate 键出自困毙分支、自有解题胜负，仍走中央浮层）。
-         mate-end 一挂，中央浮层整层退场（CSS）；mate-bar-on 由约 1s 定时
-         器在上升沿起表后置位，终局解除即清表摘类——悔棋抢在小条出现前
-         退出绝杀时，小条永不闪现 */
+      /* 绝杀呈现开关（FF 轮，判定沿用 W 轮）：绝杀只认 overKey（W 轮判定
+         与存档重演共用同一事实源——doMove 落定、replayMoves 恢复都收敛
+         到这里，存档回放撞绝杀同样走前奏+浮层），残局豁免（其 overMate
+         键出自困毙分支、自有解题胜负，仍走中央浮层且当场出现）。
+         mate-end 一挂，前奏开始：CSS 压住浮层约 1s（将杀环/脉冲/原因句
+         先行，见下方各块），mate-over-on 由约 1s 定时器在上升沿起表后
+         置位放行浮层，终局解除即清表摘类——悔棋抢在前奏内退出绝杀时，
+         浮层永不闪现 */
       const mateEndNow = over && !puzzleMode && (overKey === 'overMateR' || overKey === 'overMateB');
       const wasMateEnd = document.body.classList.contains('mate-end');
       document.body.classList.toggle('mate-end', mateEndNow);
       if (mateEndNow && !wasMateEnd){
-        if (mateBarTimer) clearTimeout(mateBarTimer);
-        mateBarTimer = setTimeout(() => { document.body.classList.add('mate-bar-on'); }, 1000);
+        if (mateOverTimer) clearTimeout(mateOverTimer);
+        mateOverTimer = setTimeout(() => { document.body.classList.add('mate-over-on'); }, 1000);
       }
       if (!mateEndNow){
-        if (mateBarTimer){ clearTimeout(mateBarTimer); mateBarTimer = null; }
-        document.body.classList.remove('mate-bar-on');
+        if (mateOverTimer){ clearTimeout(mateOverTimer); mateOverTimer = null; }
+        document.body.classList.remove('mate-over-on');
       }
       /* 闯关结算挂 render（所有终局路径的必经之路）：红胜即过关，纪录
          只升不降——重打低关获胜时 gate ≤ bestGate，条件天然不成立；
@@ -3560,7 +3552,6 @@
         try { renderLadder(); } catch (e) {}
       }
       try { paintOverBtn(); } catch (e) {}
-      try { paintMateBar(); } catch (e) {}
       piecesEl.innerHTML = '';
       piecesEl.classList.remove('fade-on');
       /* 终局褪灰的输家只从 over/overKey 现推（与印章、状态行同源）：胜键映射——
@@ -3652,7 +3643,8 @@
            有步解将」——被将方（overMateR 的败方是黑、overMateB 是红）
            的 mateWhy 句进 .pos（各表面 .pos 恒带省略号收尾与定宽纪律，
            四语长句只在本格内截断，不撑行、不挤同行钟面/提示键）；
-           回合行与沉浸顶栏小字仍报结果（overKey），小条随后同文到达 */
+           回合行与沉浸顶栏小字仍报结果（overKey）；浮层明话（FF 轮）
+           讲规则（为什么这算输），与本句讲事实分工并存、不算重复 */
         if (mateEndNow) $('posLabel').textContent = LT()[overKey === 'overMateR' ? 'mateWhyB' : 'mateWhyR'] || LT()[overKey] || '';
         $('checkTag').textContent = '';
         $('hintLabel').textContent = LT().hintOver;
@@ -4943,6 +4935,12 @@
     function paintOverBtn(){
       const b = $('btnAgain'); if (!b) return;
       const u = $('btnOverUndo');
+      /* 绝杀明话（FF 轮）：仅绝杀终局亮，其余一切终局恒收起；文案随
+         LT() 现刷——切语言必经 render/paintMode 到本函数，即时重刷。
+         与状态行原因句分工：原因句讲这局的事实，本行讲规则本身 */
+      const note = $('overNote');
+      const mateNow = over && !puzzleMode && (overKey === 'overMateR' || overKey === 'overMateB');
+      if (note){ note.hidden = !mateNow; if (mateNow) note.textContent = LT().mateNote; }
       /* 次按钮定型：仅残局终局可见（题目列表），其余模式/状态一律收起，
          层内只剩主动作一个钮居中——主钮定型尺寸不随次钮显隐变化 */
       if (u) u.hidden = !(puzzleMode && over);
@@ -4969,23 +4967,13 @@
       else if (over) b.textContent = LT().retryGate;
       else b.textContent = LT().again;
     }
-    /* 绝杀小条文案（DD 轮）：与浮层主钮同源——主钮文案由 paintOverBtn
-       按模式×胜负刚写定，这里逐字镜像给小条主钮；结果文案与状态行/
-       回合行同出 overKey 词典（切语言随 render/paintMode 重刷，不存
-       字符串）。小条只在绝杀时由 body.mate-bar-on 点亮，其余终局这两
-       处文案写了也不见 */
-    function paintMateBar(){
-      const mb = $('btnMateAgain'), mt = $('mateTxt'), b = $('btnAgain');
-      if (mb && b) mb.textContent = b.textContent;
-      if (mt) mt.textContent = over ? (LT()[overKey] || '') : '';
-    }
-    /* 终局主动作（浮层主钮与绝杀小条主钮共用，DD 轮起）：一次直达、
-       无二次确认，模式×胜负的去向矩阵只此一份——再来一局 / 下一关 /
-       再战本关 / 回榜选关 / 残局下一题·题目列表全走下方既有衔接 */
+    /* 终局主动作（浮层主钮唯一动作，S 轮起）：一次直达、无二次确认，
+       模式×胜负的去向矩阵只此一份——再来一局 / 下一关 / 再战本关 /
+       回榜选关 / 残局下一题·题目列表全走下方既有衔接 */
     function overMainAction(){
       /* 防误触（S 轮）：终局出现后约 0.5s 内拒点——终局瞬间玩家正点
          棋盘的手不许直接命中主钮；延迟过后一击直达下方既有衔接。
-         绝杀小条约 1s 后才出现，亮出时本闸早已放行，口径不变 */
+         绝杀浮层约 1s 前奏后才出现，亮出时本闸早已放行，口径不变 */
       if (!overClickArmed) return;
       try { closeSheets(); } catch (e) {}
       stopArmed();
@@ -5007,7 +4995,6 @@
       sndMove();
     }
     $('btnAgain').addEventListener('click', overMainAction);
-    $('btnMateAgain').addEventListener('click', overMainAction);
     $('btnOverUndo').addEventListener('click', () => {
       if (!overClickArmed) return;   /* 与主钮同一防误触闸（S 轮） */
       if (puzzleMode && over){ try { closeSheets(); } catch (e) {} openPuzzleList(); return; }
@@ -5088,7 +5075,6 @@
         (aiMode ? (playerSide === 'r' ? LT().heroNoteAiR : LT().heroNoteAiB) : LT().heroNotePvp);
       $('btnUndo').textContent = LT().undoBtn;
       paintOverBtn();
-      try { paintMateBar(); } catch (e) {}
     }
     /* 模式切换 = 换对局前提，整盘重开。闯关无指定关时从当前关
        （本地最高纪录 + 1，已通关停在第 8 关守关）开局 */
