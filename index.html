@@ -1713,7 +1713,15 @@
         main{ display:flex; flex-direction:column; }
         .stage{ flex:1 1 auto; min-height:0; grid-template-columns:minmax(0,1fr) 290px; grid-template-rows:minmax(0,1fr); gap:22px; }
         .boardcol{ display:flex; flex-direction:column; min-height:0; height:100%; }
-        .boardcol .boardwrap{ margin-top:auto; margin-bottom:auto; width:min(100%, max(170px, calc((100dvh - 522px) * 96 / 106))); }
+        /* 平板带棋盘高度扣减 522 → 330（II 轮，用户批准的定型几何变更）：
+           522 是早期保守值，HH 轮在 1023×900 实测舞台实高反推：盘外固定
+           占用（hero 行 + 回合行 + 状态行 + 模式段 + 工具行 + 托盘 + 主区
+           上下边距）合计约 327，旧值白白吃掉约 195 高度、棋盘只剩
+           342×378。改 330（327 取整并留 3px 余量防字体加载漂移），
+           1023×900 棋盘约 516×570（+约 51%）。768×1024 / 641×900 两档
+           高度项本就大于列宽、由 min(100%,…) 列宽封顶，不吃此扣减，
+           尺寸逐值不变；带外（≤640 的 294、≥1024 的 300）不动 */
+        .boardcol .boardwrap{ margin-top:auto; margin-bottom:auto; width:min(100%, max(170px, calc((100dvh - 330px) * 96 / 106))); }
         .score{ min-height:0; display:flex; flex-direction:column; }
         .score .movelist{ flex:1 1 auto; height:auto; max-height:none; min-height:0; }
       }
