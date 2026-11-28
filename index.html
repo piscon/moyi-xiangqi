@@ -2060,7 +2060,11 @@
       .fs-exit, .overbar .ghost{ font-size:var(--gg-sm); }
       .mp-lab, .crow .c-title{ font-size:var(--gg-lab); }
       .toolbar .side-hint{ font-size:var(--gg-sm); }
-      .crow .c-desc, .matbal{ font-size:var(--gg-body); }
+      /* HH 轮补齐：.crow 全部住在关于面板内，而面板另有 (0,3,0) 的
+         13.5px 旧规（见 .aboutpanel .crow .c-desc），GG 原 (0,2,0) 选择器
+         在面板内全数落败、c-desc 归 body 档从未生效——补同特异性选择器
+         后才真正归档（活页实测 13.5 → 14.5，行高 1.55 仍归旧规管） */
+      .crow .c-desc, .aboutpanel .crow .c-desc, .matbal{ font-size:var(--gg-body); }
       .about p{ font-size:15px; }
       /* 数字对齐：tabular-nums（技能 §1，不引入等宽字体） */
       .pnum, .lrow .elo, .mrow .no, .trays .cnt, .vsbanner .vs-elo, .clk{ font-variant-numeric:tabular-nums; }
