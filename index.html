@@ -2013,6 +2013,82 @@
       .mobilebar{ box-shadow:0 -10px 24px -18px var(--shadow); }
       .hero .note{ font-weight:500; }
     </style>
+    <style>
+      /* ---------- GG 轮：全界面视觉重构（技能 gemini-frontend-design 落地层） ----------
+         本层是纯视觉覆盖：只写 background / color / border-color / box-shadow /
+         font-size / font-variant-numeric / transition 六类绘制属性——盒尺寸、
+         位置、内距、边框宽度、布局一律不动，各表面 rect 与改前逐值一致；
+         游戏行为、文案、存档、绝杀流程均不在本层触及。四条口径：
+         ① 令牌收口：散落硬编码色（遮罩色、棋子面高光/低光、终局雾色、
+         朱砂面白字）全部改走 :root 令牌，深浅两主题同名同义；
+         ② 字体阶梯收敛（技能 §1）：正文三档 --gg-lg 17 / --gg-body 14.5 /
+         --gg-sm 13，标签档 12；原 13.5 散点统一归 13、12.5 归 12，
+         层次改由字重与墨色承担；11/11.5 的托盘计数、术语注脚、状态
+         小标是高密度游戏 UI 的既定例外（简报适配义务），保留原值；
+         数字一律 tabular-nums（时钟已有，本轮补棋力/梯队/棋谱步号/
+         托盘计数/VS 棋力），不用第三种等宽字体；
+         ③ 动效校准（技能 §3）：可点控件过渡统一 180ms
+         cubic-bezier(0.22,1,0.36,1)、显式属性、无 transition:all；
+         棋子落子 .16s 同曲线；棋谱抽屉 .26s→.24s 同曲线。终局褪灰
+         .6s、将军闪字、落印、VS 横幅等是游戏语义时序，不属交互
+         过渡，不在本轮压缩范围；减动效口径在本层末尾整组重述；
+         ④ 去杂（技能 §4）：门卡/弹窗的 V 轮内衬双环（卡中卡式装裱）
+         退为单一投影，浮层回到干净纯纸（纸纹不上浮层口径不变） */
+      :root{
+        --gg-ease:cubic-bezier(0.22,1,0.36,1);
+        --gg-lg:17px; --gg-body:14.5px; --gg-sm:13px; --gg-lab:12px;
+        --scrim:rgba(24,20,14,.34);
+        --on-accent:#fff;
+        --piece-hi:#fdf8e7; --piece-lo:#e3d5b4;
+        --over-veil:rgba(244,237,218,.52);
+      }
+      @media (prefers-color-scheme: dark){
+        :root{ --over-veil:rgba(31,27,20,.55); }
+      }
+      /* ① 令牌收口 */
+      .sheetback, .panelback, .popback{ background:var(--scrim); }
+      .piece .face{ background:radial-gradient(circle at 36% 30%, var(--piece-hi), var(--piece-face) 58%, var(--piece-lo) 100%); }
+      .trays .mini{ background:radial-gradient(circle at 36% 30%, var(--piece-hi), var(--piece-face) 58%, var(--piece-lo) 100%); }
+      .overbar{ background:var(--over-veil); }
+      .overbar .again, .mp-act, .stamp.win, .stamp.seal, .pzseal.solid, .crow .c-you,
+      .freetools button.armed, .mobilebar button.armed, .fst-btn.armed,
+      .modeswitch .seg button.armed{ color:var(--on-accent); }
+      /* ② 字体阶梯：13.5 散点归 --gg-sm、12.5 归 --gg-lab、正文归 --gg-body */
+      .iconbtn, .turnline .tip, .statusline .hint, .thinking, .freetools button,
+      .score .capline, .empty-note, .lrow .rec, .aboutpanel .lede,
+      .fstopbar .fst-btn, .fstopbar .fst-status, .score-close, .panel-close,
+      .fs-exit, .overbar .ghost{ font-size:var(--gg-sm); }
+      .mp-lab, .crow .c-title{ font-size:var(--gg-lab); }
+      .toolbar .side-hint{ font-size:var(--gg-sm); }
+      .crow .c-desc, .matbal{ font-size:var(--gg-body); }
+      .about p{ font-size:15px; }
+      /* 数字对齐：tabular-nums（技能 §1，不引入等宽字体） */
+      .pnum, .lrow .elo, .mrow .no, .trays .cnt, .vsbanner .vs-elo, .clk{ font-variant-numeric:tabular-nums; }
+      /* ③ 交互过渡校准：180ms 统一曲线、显式属性 */
+      .freetools button, .mobilebar button, .modeswitch .seg button, .fst-btn,
+      .mg-btn, .mp-seg button, .mp-gate, .mrow button, .langpop .langopt,
+      .panel-close, .score-close, .fs-exit, .overbar button, .mp-act,
+      .statusline .hintbtn, .crow.clickable{
+        transition:background-color .18s var(--gg-ease), color .18s var(--gg-ease), border-color .18s var(--gg-ease), filter .18s var(--gg-ease);
+      }
+      .iconbtn{ transition:background-color .18s var(--gg-ease), color .18s var(--gg-ease), transform .16s var(--gg-ease); }
+      .piece .face{ transition:transform .16s var(--gg-ease), box-shadow .16s var(--gg-ease), filter .6s ease .28s, color .6s ease .28s, border-color .6s ease .28s; }
+      @media (max-width:640px){
+        body:not(.immersive) .score{ transition:transform .24s var(--gg-ease); }
+      }
+      /* ④ 去杂：浮层内衬双环退场，只留干净投影与纯纸面 */
+      .mg-card, .modepop{ box-shadow:0 18px 44px var(--shadow), 0 3px 10px var(--shadow); }
+      /* 减动效重述：本层覆盖了 .piece .face 与棋谱抽屉的 transition，
+         须在减动效下把既有口径原样钉回（与前两层规则同值） */
+      @media (prefers-reduced-motion: reduce){
+        .piece .face{ transition:transform .16s var(--gg-ease), box-shadow .16s var(--gg-ease), filter .01s, color .01s, border-color .01s; }
+        body:not(.immersive) .score{ transition:none; }
+        .freetools button, .mobilebar button, .modeswitch .seg button, .fst-btn,
+        .iconbtn, .mg-btn, .mp-seg button, .mp-gate, .mrow button, .langpop .langopt,
+        .panel-close, .score-close, .fs-exit, .overbar button, .mp-act,
+        .statusline .hintbtn, .crow.clickable{ transition:none; }
+      }
+    </style>
   </head>
   <body>
     <svg width="0" height="0" style="position:absolute" aria-hidden="true">
